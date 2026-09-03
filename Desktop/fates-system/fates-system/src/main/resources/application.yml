@@ -1,0 +1,85 @@
+spring:
+  application:
+    name: fates-system
+
+fates:
+  google:
+    service-account-key-path: ${GOOGLE_APPLICATION_CREDENTIALS:credentials/service-account.json}
+    service-account-email: ${GOOGLE_SERVICE_ACCOUNT_EMAIL:}
+    private-key: ${GOOGLE_PRIVATE_KEY:}
+    secret-manager:
+      enabled: true
+      project-id: "650454847556"
+      secret-name: "FATES-NEWSLETTER"
+      version: "latest"
+  
+  calendars:
+    korea: "en.south_korea#holiday@group.v.calendar.google.com"
+    japan: "en.japanese#holiday@group.v.calendar.google.com"
+    custom: "c_59413484b7a70585537d0853abb0b031e1b5124bff359f9519235fd99c0b43f4@group.calendar.google.com"
+
+  target-emails:
+    - "cloud@fatesinc.com"
+
+  groups:
+    seaimp1:
+      - "seaimp1@fatesinc.com"
+    baf:
+      - "seaimp2@fatesinc.com"
+      - "seaimp3@fatesinc.com"
+    bl1:
+      - "bl1@fatesinc.com"
+
+  skip-holidays:
+    - "Mother's Day"
+    - "Father's Day"
+    - "Valentine's Day"
+    - "White Day"
+    - "Christmas Eve"
+    - "Halloween"
+    - "Labor Day"
+    - "Parents' Day"
+    - "Parent's Day"
+    - "Teachers' Day"
+    - "Teacher's Day"
+    - "Armed Forces Day"
+    - "United Nations Day"
+    - "Martyrs' Day"
+    - "Star Festival"
+
+  log-sheet-id: "1HFbTeqLVC6lplLbCxFNzluauWxTSqG6RZcjsKDfO7uo"
+
+  scheduler:
+    enabled: false
+    cron: "0 0 1 * * *" # Daily at 01:00 AM
+
+  newsletter:
+    enabled: true
+    cron: "0 0 * * * *" # Every hour
+    secret-name: "FATES-NEWSLETTER"
+    canva:
+      source-folder-id: "FAHSsO0H6ZA"
+      archive-folder-id: "FAF7F_uQVOI"
+      max-poll-attempts: 15
+      poll-interval-ms: 2000
+    instagram:
+      enabled: true
+      api-version: "v19.0"
+      max-carousel-items: 10
+      publish-wait-ms: 3000
+    email:
+      spreadsheet-id: "1-yK3rYddxNqp3SPVyX7yYLTSr3psUGZUSMukbPui2bg"
+      sender: "no-reply@fatesinc.com"
+      draft-target: "no-reply@fatesinc.com"
+      bcc-chunk-size: 50
+    drive:
+      folder-id: "1VLv23Hg5sl5Nd8kztGPnAfNj7a1J1C5R"
+
+  it-notice:
+    sender: "cloud@fatesinc.com"
+    recipient: "yjchoi@fatesinc.com"
+    cc-recipients: "mocomotoko@fatesinc.com,airimport@fatesinc.com,airexport@fatesinc.com,seaimport@fatesinc.com,seaexport@fatesinc.com,account1@fatesinc.com,bl@fatesinc.com,pearlsim@fatesinc.com,layla@fatesinc.com,ikeda@fatesinc.com,mia@fatesinc.com,tf@fatesinc.com,azamino.ltd@gmail.com,sales@fatesinc.com,cloud@fatesinc.com"
+    image1-id: "1cvvBZIYxJIgicwjJDpxj0VLBuqPYymtx"
+    image2-id: "1eW6KyZxDppJ-AuY5T4vuE50RqNL9UDRc"
+    image3-id: "11gdrrUghvJAb6EIJW8XM52eFZWNvBmT6"
+    image4-id: "1mUgHabKGmBexebKVdjTKmQSdA7AQi6MA"
