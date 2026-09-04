@@ -39,6 +39,26 @@ public class ItNoticeController {
     }
 
     /**
+     * 사내 IT 정기 보안 안내 메일 즉시 직접 발송
+     */
+    @PostMapping("/send")
+    public ResponseEntity<Map<String, String>> sendEmail() {
+        String messageId = itNoticeEmailService.sendItNoticeEmail();
+        if (messageId != null) {
+            return ResponseEntity.ok(Map.of(
+                    "status", "SUCCESS",
+                    "messageId", messageId,
+                    "message", "IT notice email sent successfully"
+            ));
+        } else {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "status", "ERROR",
+                    "message", "Failed to send IT notice email"
+            ));
+        }
+    }
+
+    /**
      * IT 보안 안내 메일 본문 HTML 미리보기
      */
     @GetMapping(value = "/preview", produces = MediaType.TEXT_HTML_VALUE + ";charset=UTF-8")

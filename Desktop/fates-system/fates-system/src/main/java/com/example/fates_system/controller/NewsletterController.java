@@ -20,6 +20,7 @@ public class NewsletterController {
     private final NewsletterAutomationService automationService;
     private final GcpSecretService gcpSecretService;
     private final GoogleAuthService googleAuthService;
+    private final com.example.fates_system.service.InstagramService instagramService;
 
     /**
      * 뉴스레터 자동화 파이프라인 수동 즉시 실행
@@ -31,13 +32,13 @@ public class NewsletterController {
     }
 
     /**
-     * Instagram Access Token GCP Secret Manager 업데이트
+     * Instagram Access Token GCP Secret Manager 업데이트 (60일 장기 토큰 자동 교환 시도 후 저장)
      */
     @PostMapping("/update-instagram-token")
     public ResponseEntity<Map<String, String>> updateInstagramToken(@RequestParam String token) {
-        boolean ok = gcpSecretService.updateInstagramAccessToken(token);
+        boolean ok = instagramService.exchangeAndSaveToken(token);
         if (ok) {
-            return ResponseEntity.ok(Map.of("status", "SUCCESS", "message", "Instagram access token updated in GCP Secret Manager"));
+            return ResponseEntity.ok(Map.of("status", "SUCCESS", "message", "Instagram access token exchanged and updated in GCP Secret Manager"));
         } else {
             return ResponseEntity.internalServerError().body(Map.of("status", "ERROR", "message", "Failed to update Instagram token"));
         }

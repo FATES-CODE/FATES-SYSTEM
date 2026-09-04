@@ -152,7 +152,8 @@ public class InstagramService {
             if (json.has("access_token")) {
                 String newToken = json.get("access_token").asText();
                 cachedInstagramToken = newToken;
-                log.info("[InstagramService] Instagram token auto-refreshed (cached in memory)");
+                log.info("[InstagramService] Instagram token auto-refreshed and updating GCP Secret Manager");
+                gcpSecretService.updateInstagramAccessToken(newToken);
                 return newToken;
             }
             log.warn("[InstagramService] Token refresh failed: {}", res.body());
@@ -160,6 +161,37 @@ public class InstagramService {
             log.warn("[InstagramService] doRefreshToken error: {}", e.getMessage());
         }
         return currentToken;
+    }
+
+    /**
+     * 신규 토큰 등록 시 60일 장기 토큰 전환 시도 후 GCP Secret Manager 저장
+     */
+    public boolean exchangeAndSaveToken(String inputToken) {
+        AppProperties.Newsletter.Instagram cfg = appProperties.getNewsletter().getInstagram();
+        String appId = getAppId();
+        String appSecret = getAppSecret();
+        String finalToken = inputToken;
+
+        if (appId != null && !appId.isBlank() && appSecret != null && !appSecret.isBlank()) {
+            try {
+                String refreshUrl = "https://graph.facebook.com/" + cfg.getApiVersion() + "/oauth/access_token"
+                        + "?grant_type=fb_exchange_token"
+                        + "&client_id=" + URLEncoder.encode(appId, StandardCharsets.UTF_8)
+                        + "&client_secret=" + URLEncoder.encode(appSecret, StandardCharsets.UTF_8)
+                        + "&fb_exchange_token=" + URLEncoder.encode(inputToken, StandardCharsets.UTF_8);
+                HttpRequest req = HttpRequest.newBuilder().uri(URI.create(refreshUrl)).GET().build();
+                HttpResponse<String> res = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+                JsonNode json = objectMapper.readTree(res.body());
+                if (json.has("access_token")) {
+                    finalToken = json.get("access_token").asText();
+                    log.info("[InstagramService] Successfully exchanged input token for 60-day Long-Lived Token");
+                }
+            } catch (Exception e) {
+                log.warn("[InstagramService] Long-lived token exchange failed, saving original token: {}", e.getMessage());
+            }
+        }
+        cachedInstagramToken = finalToken;
+        return gcpSecretService.updateInstagramAccessToken(finalToken);
     }
 
     /** GCP Secret에서 Meta 앱 ID/시크릿 조회 (instagram_app_id, instagram_app_secret 필드) */

@@ -32,6 +32,41 @@ public class ItNoticeEmailService {
     private final GoogleAuthService googleAuthService;
 
     /**
+     * IT 보안 안내 메일 직접 전송
+     * @return 전송된 Message ID (실패 시 null)
+     */
+    public String sendItNoticeEmail() {
+        AppProperties.ItNotice config = appProperties.getItNotice();
+        String sender = config.getSender();
+        String recipient = config.getRecipient();
+        String cc = config.getCcRecipients();
+
+        try {
+            log.info("[ItNoticeEmailService] Starting IT Notice email sending. To: {}, CC count: {}",
+                    recipient, cc != null ? cc.split(",").length : 0);
+
+            MimeMessage mimeMessage = buildMimeMessage(config, sender, recipient, cc);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            mimeMessage.writeTo(baos);
+            String encoded = Base64.getUrlEncoder().encodeToString(baos.toByteArray());
+
+            Message gmailMessage = new Message();
+            gmailMessage.setRaw(encoded);
+
+            Gmail gmailClient = googleAuthService.getGmailClientForUser(sender);
+            Message sentMessage = gmailClient.users().messages().send("me", gmailMessage).execute();
+
+            log.info("[ItNoticeEmailService] Successfully sent IT Notice Email with ID: {}", sentMessage.getId());
+            return sentMessage.getId();
+
+        } catch (Exception e) {
+            log.error("[ItNoticeEmailService] Failed to send IT Notice email: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
      * IT 보안 안내 메일 드래프트 생성
      * @return 생성된 Draft ID (실패 시 null)
      */
@@ -45,47 +80,8 @@ public class ItNoticeEmailService {
             log.info("[ItNoticeEmailService] Starting IT Notice draft creation. To: {}, CC count: {}",
                     recipient, cc != null ? cc.split(",").length : 0);
 
-            // 1. Google Drive에서 이미지 4개 다운로드
-            byte[] img1 = downloadDriveFile(config.getImage1Id());
-            byte[] img2 = downloadDriveFile(config.getImage2Id());
-            byte[] img3 = downloadDriveFile(config.getImage3Id());
-            byte[] img4 = downloadDriveFile(config.getImage4Id());
+            MimeMessage mimeMessage = buildMimeMessage(config, sender, recipient, cc);
 
-            // 2. 메일 제목 생성 (오늘 날짜 포함)
-            String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
-            String subject = "<INTERNAL> PC 및 자료 관리에 대한 정기 안내 (" + todayStr + ")";
-
-            // 3. 메일 본문 HTML
-            String htmlBody = buildHtmlBody();
-
-            // 4. MimeMessage (인라인 이미지 CID 매핑) 구성
-            Session session = Session.getDefaultInstance(new Properties(), null);
-            MimeMessage mimeMessage = new MimeMessage(session);
-            mimeMessage.setFrom(new InternetAddress(sender));
-            mimeMessage.setRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(recipient));
-
-            if (cc != null && !cc.isBlank()) {
-                mimeMessage.setRecipients(jakarta.mail.Message.RecipientType.CC, InternetAddress.parse(cc));
-            }
-            mimeMessage.setSubject(subject, "UTF-8");
-
-            // MimeMultipart("related") 설정
-            MimeMultipart multipart = new MimeMultipart("related");
-
-            // HTML 본문 Part
-            MimeBodyPart htmlPart = new MimeBodyPart();
-            htmlPart.setContent(htmlBody, "text/html; charset=utf-8");
-            multipart.addBodyPart(htmlPart);
-
-            // 이미지 Parts 추가 (CID: image1 ~ image4)
-            addImagePart(multipart, img1, "image1");
-            addImagePart(multipart, img2, "image2");
-            addImagePart(multipart, img3, "image3");
-            addImagePart(multipart, img4, "image4");
-
-            mimeMessage.setContent(multipart);
-
-            // 5. Gmail Draft API 호출
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             mimeMessage.writeTo(baos);
             String encoded = Base64.getUrlEncoder().encodeToString(baos.toByteArray());
@@ -106,6 +102,49 @@ public class ItNoticeEmailService {
             log.error("[ItNoticeEmailService] Failed to create IT Notice draft: {}", e.getMessage(), e);
             return null;
         }
+    }
+
+    private MimeMessage buildMimeMessage(AppProperties.ItNotice config, String sender, String recipient, String cc) throws Exception {
+        // 1. Google Drive에서 이미지 4개 다운로드
+        byte[] img1 = downloadDriveFile(config.getImage1Id());
+        byte[] img2 = downloadDriveFile(config.getImage2Id());
+        byte[] img3 = downloadDriveFile(config.getImage3Id());
+        byte[] img4 = downloadDriveFile(config.getImage4Id());
+
+        // 2. 메일 제목 생성 (오늘 날짜 포함)
+        String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        String subject = "<INTERNAL> PC 및 자료 관리에 대한 정기 안내 (" + todayStr + ")";
+
+        // 3. 메일 본문 HTML
+        String htmlBody = buildHtmlBody();
+
+        // 4. MimeMessage (인라인 이미지 CID 매핑) 구성
+        Session session = Session.getDefaultInstance(new Properties(), null);
+        MimeMessage mimeMessage = new MimeMessage(session);
+        mimeMessage.setFrom(new InternetAddress(sender));
+        mimeMessage.setRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(recipient));
+
+        if (cc != null && !cc.isBlank()) {
+            mimeMessage.setRecipients(jakarta.mail.Message.RecipientType.CC, InternetAddress.parse(cc));
+        }
+        mimeMessage.setSubject(subject, "UTF-8");
+
+        // MimeMultipart("related") 설정
+        MimeMultipart multipart = new MimeMultipart("related");
+
+        // HTML 본문 Part
+        MimeBodyPart htmlPart = new MimeBodyPart();
+        htmlPart.setContent(htmlBody, "text/html; charset=utf-8");
+        multipart.addBodyPart(htmlPart);
+
+        // 이미지 Parts 추가 (CID: image1 ~ image4)
+        addImagePart(multipart, img1, "image1");
+        addImagePart(multipart, img2, "image2");
+        addImagePart(multipart, img3, "image3");
+        addImagePart(multipart, img4, "image4");
+
+        mimeMessage.setContent(multipart);
+        return mimeMessage;
     }
 
     private void addImagePart(MimeMultipart multipart, byte[] imageBytes, String cid) {

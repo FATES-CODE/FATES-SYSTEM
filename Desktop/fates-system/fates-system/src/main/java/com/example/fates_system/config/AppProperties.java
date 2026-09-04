@@ -29,6 +29,8 @@ public class AppProperties {
     @Getter
     @Setter
     public static class ItNotice {
+        private boolean enabled = true;
+        private String cron = "0 0 9 1 * *";
         private String sender = "cloud@fatesinc.com";
         private String recipient = "yjchoi@fatesinc.com";
         private String ccRecipients = "mocomotoko@fatesinc.com,airimport@fatesinc.com,airexport@fatesinc.com,seaimport@fatesinc.com,seaexport@fatesinc.com,account1@fatesinc.com,bl@fatesinc.com,pearlsim@fatesinc.com,layla@fatesinc.com,ikeda@fatesinc.com,mia@fatesinc.com,tf@fatesinc.com,azamino.ltd@gmail.com,sales@fatesinc.com,cloud@fatesinc.com";
