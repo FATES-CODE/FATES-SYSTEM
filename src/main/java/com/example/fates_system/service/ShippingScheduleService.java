@@ -141,7 +141,7 @@ public class ShippingScheduleService {
                 if (href.contains("port=") && !upperText.contains("WEEK") && !rawText.contains("<") && !rawText.contains(">")) {
                     try {
                         URI resolved = URI.create(carrierBaseUrl).resolve(href);
-                        String cleanPortName = rawText.replaceAll("^[<>-—\\s]+", "").trim();
+                        String cleanPortName = cleanPortNameToEnglish(rawText);
                         if (!cleanPortName.isEmpty()) {
                             portUrlMap.put(resolved.toString(), cleanPortName);
                         }
@@ -253,8 +253,8 @@ public class ShippingScheduleService {
                     .carrier(carrierName)
                     .vesselName(vessel)
                     .voyage(voyage)
-                    .pol(polName)
-                    .pod("KOREA (한국)")
+                    .pol(cleanPortNameToEnglish(polName))
+                    .pod("KOREA")
                     .arrival(arrival)
                     .berthing(berthing)
                     .sailing(sailing)
@@ -327,6 +327,80 @@ public class ShippingScheduleService {
             // ignore parse exception
         }
         return false;
+    }
+
+    private static final Map<String, String> JAPANESE_PORT_NAME_MAP = Map.ofEntries(
+            Map.entry("博多", "HAKATA"),
+            Map.entry("大阪", "OSAKA"),
+            Map.entry("神戸", "KOBE"),
+            Map.entry("横浜", "YOKOHAMA"),
+            Map.entry("名古屋", "NAGOYA"),
+            Map.entry("東京", "TOKYO"),
+            Map.entry("門司", "MOJI"),
+            Map.entry("下関", "SHIMONOSEKI"),
+            Map.entry("清水", "SHIMIZU"),
+            Map.entry("千葉", "CHIBA"),
+            Map.entry("川崎", "KAWASAKI"),
+            Map.entry("四日市", "YOKKAICHI"),
+            Map.entry("広島", "HIROSHIMA"),
+            Map.entry("徳山", "TOKUYAMA"),
+            Map.entry("新潟", "NIIGATA"),
+            Map.entry("金沢", "KANAZAWA"),
+            Map.entry("富山", "TOYAMA"),
+            Map.entry("敦賀", "TSURUGA"),
+            Map.entry("伊予三島", "IYOMISHIMA"),
+            Map.entry("松山", "MATSUYAMA"),
+            Map.entry("今治", "IMABARI"),
+            Map.entry("高松", "TAKAMATSU"),
+            Map.entry("徳島", "TOKUSHIMA"),
+            Map.entry("高知", "KOCHI"),
+            Map.entry("八戸", "HACHINOHE"),
+            Map.entry("仙台", "SENDAI"),
+            Map.entry("小名浜", "ONAHAMA"),
+            Map.entry("常陸那珂", "HITACHINAKA"),
+            Map.entry("熊本", "KUMAMOTO"),
+            Map.entry("細島", "HOSOSHIMA"),
+            Map.entry("志布志", "SHIBUSHI"),
+            Map.entry("鹿児島", "KAGOSHIMA"),
+            Map.entry("那覇", "NAHA"),
+            Map.entry("苫小牧", "TOMAKOMAI"),
+            Map.entry("石狩", "ISHIKARI"),
+            Map.entry("石狩湾新港", "ISHIKARI")
+    );
+
+    /**
+     * 항구명에서 일본어/기호를 제거하고 영문 항구명만 추출 (영문이 없으면 사전 매핑)
+     */
+    private String cleanPortNameToEnglish(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+
+        String cleaned = raw.replaceAll("^[<>-—\\s]+", "").trim();
+
+        // 1. 이미 영문이 포함되어 있는 경우 (예: "大阪 OSAKA", "- 横浜 YOKOHAMA", "博多 HAKATA") -> 영문 단어만 추출
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[A-Za-z]+(?:\\s+[A-Za-z]+)*").matcher(cleaned);
+        List<String> englishWords = new ArrayList<>();
+        while (m.find()) {
+            String w = m.group().trim();
+            if (!w.equalsIgnoreCase("PORT") && !w.equalsIgnoreCase("WEEK") && !w.equalsIgnoreCase("SCHEDULE")) {
+                englishWords.add(w.toUpperCase());
+            }
+        }
+        if (!englishWords.isEmpty()) {
+            return String.join(" ", englishWords);
+        }
+
+        // 2. 한자만 있는 경우 사전 매핑 (예: "博多" -> "HAKATA", "大阪" -> "OSAKA")
+        for (Map.Entry<String, String> entry : JAPANESE_PORT_NAME_MAP.entrySet()) {
+            if (cleaned.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+
+        // 3. 매핑되지 않은 경우 비영문 문자 제거
+        String onlyAlpha = cleaned.replaceAll("[^A-Za-z0-9\\s]", "").trim().toUpperCase();
+        return onlyAlpha.isEmpty() ? cleaned : onlyAlpha;
     }
 
     /**
