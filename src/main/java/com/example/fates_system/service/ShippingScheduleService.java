@@ -376,15 +376,16 @@ public class ShippingScheduleService {
             return "";
         }
 
-        String cleaned = raw.replaceAll("^[<>-—\\s]+", "").trim();
+        // 선두 및 후미의 기호/공백 제거 (하이픈, 화살표, 점 등)
+        String cleaned = raw.replaceAll("^[\\s\\-<>—·・]+|[\\s\\-<>—·・]+$", "").trim();
 
-        // 1. 이미 영문이 포함되어 있는 경우 (예: "大阪 OSAKA", "- 横浜 YOKOHAMA", "博多 HAKATA") -> 영문 단어만 추출
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[A-Za-z]+(?:\\s+[A-Za-z]+)*").matcher(cleaned);
+        // 1. 이미 영문이 포함되어 있는 경우 (예: "大阪 OSAKA", "- 横浜 YOKOHAMA", "博多 HAKATA", "TOKYO") -> 영문 단어만 추출
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("[A-Za-z]+").matcher(cleaned);
         List<String> englishWords = new ArrayList<>();
         while (m.find()) {
-            String w = m.group().trim();
-            if (!w.equalsIgnoreCase("PORT") && !w.equalsIgnoreCase("WEEK") && !w.equalsIgnoreCase("SCHEDULE")) {
-                englishWords.add(w.toUpperCase());
+            String w = m.group().trim().toUpperCase();
+            if (!w.equals("PORT") && !w.equals("WEEK") && !w.equals("SCHEDULE") && !w.equals("TERMINAL")) {
+                englishWords.add(w);
             }
         }
         if (!englishWords.isEmpty()) {
@@ -398,7 +399,7 @@ public class ShippingScheduleService {
             }
         }
 
-        // 3. 매핑되지 않은 경우 비영문 문자 제거
+        // 3. 매핑되지 않은 경우 비영문 문자 제거 후 반환 (단, 비어있으면 원본 반환)
         String onlyAlpha = cleaned.replaceAll("[^A-Za-z0-9\\s]", "").trim().toUpperCase();
         return onlyAlpha.isEmpty() ? cleaned : onlyAlpha;
     }
