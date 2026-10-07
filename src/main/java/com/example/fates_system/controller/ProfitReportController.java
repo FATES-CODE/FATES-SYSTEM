@@ -26,13 +26,4 @@ public class ProfitReportController {
         ProfitReportService.ReportSyncResult result = profitReportService.syncAndConsolidateData();
         return ResponseEntity.ok(result);
     }
-
-    /**
-     * 매달 1일 오전 9시 자동 정기 실행 스케줄러
-     */
-    @Scheduled(cron = "${fates.profit-report.cron:0 0 9 1 * *}")
-    public void scheduledProfitReportSync() {
-        log.info("[ProfitReportController] 매달 1일 정기 영업이익 보고서 자동 생성 스케줄러 시작");
-        profitReportService.syncAndConsolidateData();
-    }
 }

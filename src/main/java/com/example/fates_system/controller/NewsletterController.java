@@ -3,6 +3,7 @@ package com.example.fates_system.controller;
 import com.example.fates_system.service.GcpSecretService;
 import com.example.fates_system.service.GoogleAuthService;
 import com.example.fates_system.service.NewsletterAutomationService;
+import com.example.fates_system.service.NewsletterEmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,7 @@ import java.util.Map;
 public class NewsletterController {
 
     private final NewsletterAutomationService automationService;
+    private final NewsletterEmailService emailService;
     private final GoogleAuthService googleAuthService;
     private final com.example.fates_system.service.InstagramService instagramService;
 
@@ -28,6 +30,16 @@ public class NewsletterController {
     public ResponseEntity<Map<String, String>> triggerNewsletter() {
         automationService.run();
         return ResponseEntity.ok(Map.of("status", "SUCCESS", "message", "Newsletter automation triggered successfully"));
+    }
+
+    /**
+     * 생성된 대기 중인 임시보관함(Draft) 메일들을 지정된 간격(초)을 두고 순차 자동 발송
+     */
+    @PostMapping("/send-drafts")
+    public ResponseEntity<NewsletterEmailService.SendDraftsResult> sendDrafts(
+            @RequestParam(required = false) Integer delaySeconds) {
+        NewsletterEmailService.SendDraftsResult result = emailService.sendPendingDrafts(delaySeconds);
+        return ResponseEntity.ok(result);
     }
 
     /**

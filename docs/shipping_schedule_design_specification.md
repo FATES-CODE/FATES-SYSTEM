@@ -12,15 +12,16 @@
 ## 1. 개요 (System Overview)
 
 ### 1.1 배경 및 목적
-기존 Python FastAPI (`azamino_homepage`) 기반 독립 스크립트로 운영되던 **일본→한국 선박 스케줄 수집 및 구글 시트 동기화 파이프라인**을 `fates-system` 백엔드로 완전 이관 및 내재화하였습니다.
-22개 선사(HMM, SINOKOR, HEUNG A, CK LINE, COSCO, HAPAG-LLOYD, YANG MING, STAROCEAN, HASCO, SMC, MAERSK, MSC, ONE, EVERGREEN, CMA CGM, TS LINES, PANCON, TCLC, SITC, WANHAI, NAMSUNG, DONGJIN)의 `toyoshingo.com` 공개 페이지를 동시 수집하여, 당일(JST 기준) 실제 활성 선박 정보를 통합 제공하고 구글 시트에 자동으로 동기화합니다.
+독립 스크립트로 운영되던 **일본→한국 선박 스케줄 수집 및 구글 시트 동기화 파이프라인**을 `fates-system` 백엔드로 통합하여 관리합니다.
+26개 선사(HMM, SINOKOR, HEUNG A, CK LINE, COSCO, HAPAG-LLOYD, YANG MING, STAROCEAN, HASCO, SMC, MAERSK, MSC, ONE, EVERGREEN, CMA CGM, TS LINES, PANCON, TCLC, SITC, WANHAI, NAMSUNG, DONGJIN, OOCL, INTERASIA, DONGYOUNG, KMTC)의 `vessel-schedule-service.com` API 및 `toyoshingo.com` 공개 페이지를 동시 수집하여, **오늘(당일)과 연관(입항/접안/출항)**되어 있으면서 **도착지가 한국(BUSAN, INCHEON, GWANGYANG, KOREA 등)**인 선박 스케줄을 추출하고 구글 시트에 자동으로 동기화합니다.
 
 ### 1.2 주요 기능
-1. **22개 선사 병렬 비동기 수집**: Java `HttpClient` 및 `CompletableFuture` 기반 비동기 병렬 요청으로 약 2~4초 내 전체 선사 스케줄 수집 완료.
-2. **HTML DOM & DL/DT/DD 파서**: Jsoup 파서로 `<a title="<dl>...</dl>">` 태그 내 `Vessel Name`, `Voyage`, `Arrival`, `Berthing`, `Sailing`, `Terminal Name` 정교 파싱.
-3. **스마트 당일 필터링 & 중복 제거**: 입항(Berthing) 날짜 또는 출항(Sailing) 날짜가 **오늘(JST)**에 해당하는 활성 선박만 필터링 후 중복 제거.
-4. **구글 시트(`shipping-date`) 자동 동기화**: `POST /api/v1/shipping/update-sheet` 호출 시 기존 시트 범위를 클리어하고 헤더(`선사`, `선박명`, `선박번호`, `Arrival`, `Berthing`, `Sailing`, `터미널`) 및 상세 데이터 일괄 업데이트.
-5. **REST API 엔드포인트**: 전체 또는 지정 선사 필터링 스케줄 조회 REST API 제공.
+1. **26개 선사 병렬 비동기 수집**: Java `HttpClient` 및 `CompletableFuture` 기반 비동기 병렬 요청으로 수초 내 전체 선사 스케줄 수집 완료.
+2. **신규 VSS REST API 및 레거시 HTML 크롤링 하이브리드 지원**: VSS API 우선 호출 후 미지원 선사는 HTML DOM 및 DL/DT/DD 파서로 추출.
+3. **오늘 날짜 연관 선박 필터링**: 입항(Arrival), 접안(Berthing), 출항(Sailing) 중 오늘 날짜(JST/KST 기준)와 일치하거나 연관된 활성 선박만 정밀 필터링.
+4. **한국 도착(POD) 전용 필터링**: 타국(중국, 동남아 등) 경유/도착 노선을 제외하고 **한국 도착(부산/인천/광양/평택/울산 등)** 대상 선박 스케줄만 추출.
+5. **구글 시트(`shipping-date`) 자동 동기화**: `POST /api/v1/shipping/update-sheet` 호출 시 기존 시트 범위를 클리어하고 헤더(`선사`, `선박명`, `선박번호`, `출발항(POL)`, `도착항(POD)`, `Arrival`, `Berthing`, `Sailing`, `터미널`) 및 상세 데이터 일괄 업데이트.
+6. **REST API 엔드포인트**: 전체 또는 지정 선사 필터링 스케줄 조회 REST API 제공.
 
 ---
 

@@ -82,4 +82,45 @@ class GoogleCalendarServiceTest {
         assertThat(result.getFinalNoticeText()).isEqualTo("August 11th (Tue): Mountain Day");
         assertThat(result.getResumeDate()).isEqualTo(LocalDate.of(2026, 8, 12));
     }
+
+    @Test
+    @DisplayName("실버위크 주말 카운팅 검증: 월~수 공휴일이 직전 토, 일과 병합되어 5일 연휴(토일월화수) 생성")
+    void testSilverWeekWeekendCounting() {
+        List<HolidayEventDto> rawEvents = new ArrayList<>();
+        // 2026년 9월 21일(월) ~ 9월 23일(수)
+        rawEvents.add(HolidayEventDto.builder()
+                .title("Respect for the Aged Day")
+                .start(ZonedDateTime.of(2026, 9, 21, 0, 0, 0, 0, zone))
+                .end(ZonedDateTime.of(2026, 9, 22, 0, 0, 0, 0, zone))
+                .build());
+        rawEvents.add(HolidayEventDto.builder()
+                .title("Bridge Public holiday")
+                .start(ZonedDateTime.of(2026, 9, 22, 0, 0, 0, 0, zone))
+                .end(ZonedDateTime.of(2026, 9, 23, 0, 0, 0, 0, zone))
+                .build());
+        rawEvents.add(HolidayEventDto.builder()
+                .title("Autumn Equinox")
+                .start(ZonedDateTime.of(2026, 9, 23, 0, 0, 0, 0, zone))
+                .end(ZonedDateTime.of(2026, 9, 24, 0, 0, 0, 0, zone))
+                .build());
+
+        HolidayNoticeResult result = calendarService.processAndGroupEvents(rawEvents);
+
+        assertThat(result.isHasHolidays()).isTrue();
+        assertThat(result.getFinalNoticeText()).contains("Silver Week");
+        // 주말(9월 19일 토요일, 20일 일요일)이 카운팅되어 토~수 연휴가 됨
+        assertThat(result.getFinalNoticeText()).isEqualTo("September 19th (Sat) ~ September 23rd (Wed): Silver Week");
+        // 복귀일은 9월 24일 (목요일 평일)
+        assertThat(result.getResumeDate()).isEqualTo(LocalDate.of(2026, 9, 24));
+    }
+
+    @Test
+    @DisplayName("이벤트 목록이 없거나 빈 경우 empty 결과 반환 검증")
+    void testEmptyEvents() {
+        HolidayNoticeResult result = calendarService.processAndGroupEvents(new ArrayList<>());
+        assertThat(result.isHasHolidays()).isFalse();
+        assertThat(result.getFinalNoticeText()).isEmpty();
+        assertThat(result.getResumeDate()).isNull();
+    }
+
 }

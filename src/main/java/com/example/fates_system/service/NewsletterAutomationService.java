@@ -23,6 +23,7 @@ public class NewsletterAutomationService {
     private final AppProperties appProperties;
     private final CanvaService canvaService;
     private final NewsletterEmailService emailService;
+    private final Cafe24BoardService cafe24BoardService;
     private final InstagramService instagramService;
 
     public void run() {
@@ -51,6 +52,32 @@ public class NewsletterAutomationService {
             return;
         }
         log.info("[Pipeline] Step2 done: Gmail drafts created");
+
+        // Step 2-0: Automatic sequential draft sending (if enabled)
+        AppProperties.Newsletter.Email emailCfg = appProperties.getNewsletter().getEmail();
+        if (emailCfg.isAutoSend()) {
+            log.info("[Pipeline] Auto-send is enabled. Starting sequential draft sending (delay: {}s)...",
+                    emailCfg.getDraftSendDelaySeconds());
+            NewsletterEmailService.SendDraftsResult sendResult =
+                    emailService.sendPendingDrafts(emailCfg.getDraftSendDelaySeconds());
+            log.info("[Pipeline] Step 2-0 done: Email auto-send result -> sent={}, failed={}, remaining={}, message={}",
+                    sendResult.sent(), sendResult.failed(), sendResult.remaining(), sendResult.message());
+        } else {
+            log.info("[Pipeline] Auto-send is disabled. Drafts kept in Gmail for manual review.");
+        }
+
+        // Step 2-1: Cafe24 JcBoard auto-upload (if enabled)
+        AppProperties.Newsletter.Cafe24 cafe24Cfg = appProperties.getNewsletter().getCafe24();
+        if (cafe24Cfg.isEnabled()) {
+            boolean isCafe24Ok = cafe24BoardService.uploadNewsletter(result.pdfBytes(), result.fileName(), result.title());
+            if (isCafe24Ok) {
+                log.info("[Pipeline] Step 2-1 done: Cafe24 board post uploaded successfully");
+            } else {
+                log.warn("[Pipeline] Cafe24 board upload failed - continuing subsequent steps");
+            }
+        } else {
+            log.info("[Pipeline] Cafe24 board auto-upload is disabled");
+        }
 
         // Step 3: Instagram post (if enabled)
         AppProperties.Newsletter.Instagram instaCfg = appProperties.getNewsletter().getInstagram();

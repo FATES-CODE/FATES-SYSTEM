@@ -3,6 +3,7 @@ package com.example.fates_system.service;
 import com.example.fates_system.config.AppProperties;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Draft;
+import com.google.api.services.gmail.model.ListDraftsResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.sheets.v4.Sheets;
@@ -12,11 +13,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import jakarta.activation.DataHandler;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -168,7 +171,7 @@ public class NewsletterEmailService {
         return "<p>안녕하세요.</p>\n"
                 + "<p>일본 FATES입니다.</p>\n"
                 + "<p>저희 파테스는 2012년 도쿄 설립 이래 14년간 다져온 포워딩 전문성과 탄탄한 네트워크를 바탕으로,</p>\n"
-                + "<p>한일 양국은 물론 전 세계를 연결하는 맞카형 물류 솔루션을 제공하고 있습니다.</p>\n"
+                + "<p>한일 양국은 물론 전 세계를 연결하는 맞춤형 물류 솔루션을 제공하고 있습니다.</p>\n"
                 + "<p>귀사의 성공적인 비즈니스를 지원하기 위해,</p>\n"
                 + "<p>현재 일본 물류 상황에 대한 뉴스레터를 첨부하여 보내드립니다.</p>\n"
                 + "<p>업무에 유용한 참고 자료가 되기를 바랍니다.</p>\n"
@@ -191,8 +194,9 @@ public class NewsletterEmailService {
         htmlPart.setContent(htmlBody, "text/html; charset=utf-8");
         multipart.addBodyPart(htmlPart);
         MimeBodyPart pdfPart = new MimeBodyPart();
+        ByteArrayDataSource ds = new ByteArrayDataSource(pdfBytes, "application/pdf");
+        pdfPart.setDataHandler(new DataHandler(ds));
         pdfPart.setFileName(fileName);
-        pdfPart.setContent(pdfBytes, "application/pdf");
         multipart.addBodyPart(pdfPart);
         email.setContent(multipart);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -204,6 +208,76 @@ public class NewsletterEmailService {
         draft.setMessage(gmailMessage);
         return draft;
     }
+
+    public SendDraftsResult sendPendingDrafts(Integer customDelaySeconds) {
+        AppProperties.Newsletter.Email cfg = appProperties.getNewsletter().getEmail();
+        String sender = cfg.getSender();
+        int delaySeconds = customDelaySeconds != null && customDelaySeconds >= 0
+                ? customDelaySeconds
+                : cfg.getDraftSendDelaySeconds();
+
+        try {
+            Gmail gmail = googleAuthService.getGmailClientForUser(sender);
+            ListDraftsResponse draftsResponse = gmail.users().drafts().list("me").execute();
+            List<Draft> drafts = draftsResponse.getDrafts();
+
+            if (drafts == null || drafts.isEmpty()) {
+                log.info("[NewsletterEmailService] No pending drafts found for {}", sender);
+                return new SendDraftsResult(0, 0, 0, "No pending drafts to send.");
+            }
+
+            log.info("[NewsletterEmailService] Found {} pending drafts. Starting sequential sending with {}s delay...",
+                    drafts.size(), delaySeconds);
+
+            int sentCount = 0;
+            int failedCount = 0;
+
+            for (int i = 0; i < drafts.size(); i++) {
+                Draft d = drafts.get(i);
+                try {
+                    Draft sendReq = new Draft().setId(d.getId());
+                    Message sentMessage = gmail.users().drafts().send("me", sendReq).execute();
+                    sentCount++;
+                    log.info("[NewsletterEmailService] [{}/{}] Draft (ID: {}) sent successfully. (Message ID: {})",
+                            i + 1, drafts.size(), d.getId(), sentMessage.getId());
+
+                    if (i < drafts.size() - 1 && delaySeconds > 0) {
+                        Thread.sleep(delaySeconds * 1000L);
+                    }
+                } catch (GoogleJsonResponseException e) {
+                    int statusCode = e.getStatusCode();
+                    failedCount++;
+                    log.error("[NewsletterEmailService] Failed to send draft {} (Status {}): {}", d.getId(), statusCode, e.getMessage());
+
+                    // Rate limit (429) 또는 일일 한도 초과 (403 quotaExceeded / dailyLimitExceeded) 발생 시 즉시 중단
+                    if (statusCode == 429 || statusCode == 403 ||
+                            (e.getDetails() != null && e.getDetails().getMessage() != null &&
+                             (e.getDetails().getMessage().contains("quota") || e.getDetails().getMessage().contains("limit")))) {
+                        int remaining = drafts.size() - (i + 1);
+                        log.warn("[NewsletterEmailService] Quota or Rate limit exceeded. Halting remaining {} drafts.", remaining);
+                        return new SendDraftsResult(sentCount, failedCount, remaining,
+                                "Quota/Rate limit hit after " + sentCount + " sent drafts: " + e.getMessage());
+                    }
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    int remaining = drafts.size() - (i + 1);
+                    return new SendDraftsResult(sentCount, failedCount, remaining, "Draft sending interrupted.");
+                } catch (Exception e) {
+                    failedCount++;
+                    log.error("[NewsletterEmailService] Unexpected error sending draft {}: {}", d.getId(), e.getMessage());
+                }
+            }
+
+            return new SendDraftsResult(sentCount, failedCount, 0,
+                    String.format("Completed. %d sent, %d failed.", sentCount, failedCount));
+
+        } catch (Exception e) {
+            log.error("[NewsletterEmailService] Failed to list or process drafts: {}", e.getMessage(), e);
+            return new SendDraftsResult(0, 0, 0, "Error accessing Gmail drafts: " + e.getMessage());
+        }
+    }
+
+    public record SendDraftsResult(int sent, int failed, int remaining, String message) {}
 
     private record EmailBatch(String sheetName, int colIndex, List<String> emails) {}
 }

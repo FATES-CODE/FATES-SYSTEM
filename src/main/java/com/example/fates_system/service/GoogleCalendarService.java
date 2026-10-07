@@ -135,6 +135,11 @@ public class GoogleCalendarService {
                 log.info("[Calendar] Calendar [{}] returned {} items", calendarId, events.getItems().size());
                 for (Event event : events.getItems()) {
                     HolidayEventDto dto = convertToDto(event);
+                    if (dto.getEnd() != null && !dto.getEnd().isAfter(startDate)) {
+                        log.info("[Calendar] Item: summary='{}', start={}, end={} -> 종료된 이벤트로 제외됨", 
+                                dto.getTitle(), dto.getStart().toLocalDate(), dto.getEnd().toLocalDate());
+                        continue;
+                    }
                     boolean passed = filter.test(dto);
                     log.info("[Calendar] Item: summary='{}', start={}, end={}, filterPassed={}", 
                             dto.getTitle(), dto.getStart().toLocalDate(), dto.getEnd().toLocalDate(), passed);
@@ -200,7 +205,17 @@ public class GoogleCalendarService {
 
         for (int i = 1; i < rawEvents.size(); i++) {
             HolidayEventDto ev = rawEvents.get(i);
-            if (!ev.getStart().isAfter(cur.end)) { // evStart <= cur.end
+            boolean isAdjacent = !ev.getStart().isAfter(cur.end); // evStart <= cur.end
+            boolean isWeekendBridge = false;
+
+            // 금요일 휴무(cur.end가 토요일 00:00) 후 월요일 휴무(ev.start가 월요일 00:00) 사이 주말 연결
+            if (cur.end.getDayOfWeek() == DayOfWeek.SATURDAY && ev.getStart().getDayOfWeek() == DayOfWeek.MONDAY) {
+                if (ChronoUnit.DAYS.between(cur.end.toLocalDate(), ev.getStart().toLocalDate()) <= 2) {
+                    isWeekendBridge = true;
+                }
+            }
+
+            if (isAdjacent || isWeekendBridge) {
                 if (ev.getEnd().isAfter(cur.end)) {
                     cur.end = ev.getEnd();
                 }
@@ -213,6 +228,29 @@ public class GoogleCalendarService {
             }
         }
         grouped.add(cur);
+
+        // 연휴 주말 자동 카운팅 (실버위크, 골든위크 등 2일 이상 연속 공휴일의 앞뒤 주말 포함)
+        for (GroupedHoliday g : grouped) {
+            String summary = String.join(", ", g.names);
+            String upper = summary.toUpperCase();
+            long holidayDays = ChronoUnit.DAYS.between(g.start.toLocalDate(), g.end.toLocalDate());
+
+            boolean isMultiDayHoliday = upper.contains("GOLDEN") || upper.contains("SILVER") || upper.contains("NEW")
+                    || (g.start.getMonthValue() == 5 && holidayDays >= 2)
+                    || (g.start.getMonthValue() == 9 && holidayDays >= 2)
+                    || holidayDays >= 2;
+
+            if (isMultiDayHoliday) {
+                // 시작일이 월요일이면 앞의 토요일부터 연휴 시작으로 확장 (토, 일 포함)
+                if (g.start.getDayOfWeek() == DayOfWeek.MONDAY) {
+                    g.start = g.start.minusDays(2);
+                }
+                // 종료일(exclusive)이 토요일(즉 마지막 휴일이 금요일)이면 일요일 밤(+2일)까지 확장 (토, 일 포함)
+                if (g.end.getDayOfWeek() == DayOfWeek.SATURDAY) {
+                    g.end = g.end.plusDays(2);
+                }
+            }
+        }
 
         // 안내 문구 생성
         List<String> noticeLines = new ArrayList<>();

@@ -69,9 +69,6 @@ public class ProfitReportService {
         String targetSsId = config.getTargetSpreadsheetId();
         String targetFolderId = config.getTargetFolderId();
 
-        log.info("[ProfitReport] === 영업이익 보고서 동기화 및 엑셀 내보내기 시작 ===");
-        log.info("[ProfitReport] Source: {}, Target: {}, Folder: {}", sourceSsId, targetSsId, targetFolderId);
-
         try {
             Sheets sheetsClient = googleAuthService.getSheetsClient();
             Drive driveClient;

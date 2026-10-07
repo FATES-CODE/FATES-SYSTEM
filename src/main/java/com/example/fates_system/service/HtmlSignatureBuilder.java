@@ -20,7 +20,18 @@ public class HtmlSignatureBuilder {
     private final AppProperties appProperties;
 
     private static final Pattern NOTICE_PATTERN = Pattern.compile(
-            "<span[^>]*>\\s*\\*\\*HOLIDAY NOTICE\\*\\*[\\s\\S]*?</span>(?:<br\\s*/?>)*",
+            "(?:<span[^>]*>\\s*)*(?:<div[^>]*>\\s*)*<span[^>]*>\\s*\\*\\*HOLIDAY NOTICE\\*\\*[\\s\\S]*?</span>(?:\\s*</span>)*(?:\\s*</div>)*(?:<br\\s*/?>)*",
+            Pattern.CASE_INSENSITIVE
+    );
+
+    /**
+     * seaimp/BAF 서명용 강화 클린업 패턴.
+     * 실제 Gmail 서명에서 HOLIDAY NOTICE는 color:red 스타일의 span 안에 여러 겹으로 중첩되어 있음.
+     * 예: &lt;span color:red&gt;&lt;div/&gt;&lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;span&gt;**HOLIDAY NOTICE**...&lt;/span&gt;×5&lt;/span&gt;
+     * 이 패턴은 색상이 red인 span에서 HOLIDAY NOTICE 포함 여부를 확인 후 최대 15개의 닫는 span까지 제거함.
+     */
+    private static final Pattern BAF_NOTICE_CLEANUP_PATTERN = Pattern.compile(
+            "<span[^>]*?color\\s*:\\s*(?:red|#[Ff]{2}0{4})[^>]*>[\\s\\S]*?\\*\\*HOLIDAY NOTICE\\*\\*[\\s\\S]*?(?:</span>\\s*){1,15}(?:<br[^>]*>\\s*)*",
             Pattern.CASE_INSENSITIVE
     );
 
@@ -28,8 +39,9 @@ public class HtmlSignatureBuilder {
             "株式会社FATES|\\(ファテス\\)"
     );
 
-    private static final Pattern BAF_PATTERN = Pattern.compile(
-            "[\\s\\S]*?\\*\\*HOLIDAY NOTICE\\*\\*[\\s\\S]*?(?=(?:<[^>]+>|\\s)*●?(?:<[^>]+>|\\s)*도착지(?:<[^>]+>|\\s)*[Bb][Aa][Ff](?:<[^>]+>|\\s)*요\\s*금)"
+    private static final Pattern BAF_ANCHOR_PATTERN = Pattern.compile(
+            "●?(?:<[^>]+>|\\s)*(?:도착지|到着地|\\?+)?(?:<[^>]+>|\\s)*[Bb][Aa][Ff]",
+            Pattern.CASE_INSENSITIVE
     );
 
     private static final String SEAIMP1_INTRO =
@@ -94,21 +106,70 @@ public class HtmlSignatureBuilder {
     }
 
     public String buildSignatureBAF(String currentSignature, String holidayText) {
+        String cleaned = cleanExistingHolidayNotices(currentSignature);
+        // BAF/SEAIMP 서명은 <p>/<div> 앞에 삽입되므로 trailing <br> 불필요.
+        // (BAF div 헤더에 이미 <font><b><br></b></font>가 있어 두 칸이 되는 문제 방지)
         String holidayBlock = "<span style=\"color: red; font-weight: bold; font-family: sans-serif;\">**HOLIDAY NOTICE**<br>" + holidayText + "</span>";
-        Matcher matcher = BAF_PATTERN.matcher(currentSignature);
-        if (matcher.find()) {
-            return matcher.replaceFirst(Matcher.quoteReplacement(holidayBlock));
+
+        Matcher bafMatcher = BAF_ANCHOR_PATTERN.matcher(cleaned);
+        if (bafMatcher.find()) {
+            // ● 위치에 삽입하면 <span color:blue> 안에 들어가는 문제 발생.
+            // 역방향으로 스캔해 ●을 감싼 블록 요소(<p>/<div>)의 시작 위치를 찾아 그 앞에 삽입.
+            int insertAt = findNearestBlockStart(cleaned, bafMatcher.start());
+            return cleaned.substring(0, insertAt) + holidayBlock + cleaned.substring(insertAt);
         }
-        return holidayBlock + currentSignature;
+        return buildSignatureCommon(cleaned, holidayBlock);
     }
 
     public String buildSignatureSeaimp1(String currentSignature, String holidayText) {
+        String cleaned = cleanExistingHolidayNotices(currentSignature);
         String holidayBlock = "<span style=\"color: red; font-weight: bold; font-family: sans-serif;\">**HOLIDAY NOTICE**<br>" + holidayText + "</span>";
-        Matcher matcher = BAF_PATTERN.matcher(currentSignature);
-        if (matcher.find()) {
-            return matcher.replaceFirst(Matcher.quoteReplacement(SEAIMP1_INTRO + holidayBlock));
+
+        // 마츠모토 인사말 중복 방지 (기존 서명에 없을 때만 상단 추가)
+        if (!cleaned.contains("松本") && !cleaned.toUpperCase().contains("MATSUMOTO")) {
+            cleaned = SEAIMP1_INTRO + cleaned;
         }
-        return holidayBlock + currentSignature;
+
+        Matcher bafMatcher = BAF_ANCHOR_PATTERN.matcher(cleaned);
+        if (bafMatcher.find()) {
+            int insertAt = findNearestBlockStart(cleaned, bafMatcher.start());
+            return cleaned.substring(0, insertAt) + holidayBlock + cleaned.substring(insertAt);
+        }
+        return buildSignatureCommon(cleaned, holidayBlock);
+    }
+
+    /**
+     * BAF/SEAIMP 서명용 강화 클린업.
+     * NOTICE_PATTERN(DEFAULT/BL1용)과 달리 color:red span을 기준으로 탐지하므로
+     * Gmail이 생성한 복잡한 중첩 구조(최대 15겹 닫는 span)를 모두 제거.
+     */
+    public String cleanExistingHolidayNotices(String currentSignature) {
+        if (currentSignature == null) {
+            return "";
+        }
+        return BAF_NOTICE_CLEANUP_PATTERN.matcher(currentSignature).replaceAll("");
+    }
+
+    /**
+     * fromPos(● 문자 위치)에서 역방향으로 스캔하여
+     * ●을 감싼 가장 가까운 블록 오프닝 태그(&lt;p&gt;, &lt;div&gt;, &lt;table&gt;)의 시작 위치를 반환.
+     * 블록 태그가 없으면 fromPos를 그대로 반환(● 앞에 삽입).
+     */
+    private int findNearestBlockStart(String sig, int fromPos) {
+        for (int pos = fromPos - 1; pos >= 0; pos--) {
+            if (sig.charAt(pos) == '>') {
+                int tagStart = sig.lastIndexOf('<', pos);
+                if (tagStart >= 0) {
+                    String tagContent = sig.substring(tagStart + 1, pos).trim().toLowerCase();
+                    // 닫는 태그(/)나 주석(!)은 건너뜀; p/div/table 오프닝 태그만 대상
+                    if (!tagContent.startsWith("/") && !tagContent.startsWith("!") &&
+                            (tagContent.startsWith("p") || tagContent.startsWith("div") || tagContent.startsWith("table"))) {
+                        return tagStart;
+                    }
+                }
+            }
+        }
+        return fromPos;
     }
 
     private String buildSignatureCommon(String currentSignature, String holidayBlock) {

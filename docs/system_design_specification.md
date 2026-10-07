@@ -1,7 +1,7 @@
 # FATES 메일 서명 & 부재중 자동응답 시스템 상세 설계서 (System Design Specification)
 
-**문서 버전**: v1.0.0  
-**작성일**: 2026-08-25  
+**문서 버전**: v1.1.0  
+**작성일**: 2026-09-18 (GCP Always Free 인프라 및 배포 절차 추가)  
 **시스템명**: FATES Signature & Vacation Sync Backend System (`fates-system`)  
 **개발 환경**: Java 17, Spring Boot 4.x / Gradle  
 
@@ -281,7 +281,7 @@ fates:
     custom: "c_59413484b7a70585537d0853abb0b031e1b5124bff359f9519235fd99c0b43f4@group.calendar.google.com"
 
   target-emails:
-    - "cloud@fatesinc.com"
+    - "cloud@fatesinc.com","tf1@fatesinc.com"
 
   groups:
     seaimp1:
@@ -308,6 +308,7 @@ fates:
     - "United Nations Day"
     - "Martyrs' Day"
     - "Star Festival"
+    - "Christmas"
 
   log-sheet-id: "1HFbTeqLVC6lplLbCxFNzluauWxTSqG6RZcjsKDfO7uo"
 
@@ -339,15 +340,85 @@ fates:
    - `https://www.googleapis.com/auth/calendar.readonly`
    - `https://www.googleapis.com/auth/spreadsheets`
 
-### 7.2 빌드 및 실행
+### 7.2 빌드 및 로컬 테스트
 ```bash
 # 1. 단위 테스트 실행
 ./gradlew test
 
 # 2. 실행 가능한 jar 파일 빌드
-./gradlew bootJar
+./gradlew bootJar -x test
 
-# 3. 애플리케이션 실행
+# 3. 로컬 애플리케이션 실행
 java -jar build/libs/fates-system-0.0.1-SNAPSHOT.jar
+# 또는
 .\gradlew.bat bootRun
 ```
+
+---
+
+### 7.3 GCP Always Free 클라우드 인프라 아키텍처 (무과금 운영 설계)
+
+본 시스템은 24시간 365일 상시 스케줄링 데몬 및 저빈도 REST API(월 1,000건 미만) 처리를 위해 **Google Cloud Platform (GCP) Always Free(평생 무료 티어)** 사양에 최적화되어 설계되었습니다.
+
+#### 1) 무과금(0원) 인프라 스펙 매핑
+| 구성 요소 | 설정값 (필수 조건) | 무과금 사유 및 설계 의도 |
+| :--- | :--- | :--- |
+| **인스턴스 유형** | `e2-micro` (2 vCPU, 1 GB RAM) | GCP 월 744시간(1대 24시간) 상시 무료 티어 |
+| **호스팅 리전** | `us-central1` (아이오와) | Always Free 제공 리전 (us-central1, us-east1, us-west1 중 택1) |
+| **부팅 디스크** | `20~30 GB` / **표준 영구 디스크(Standard)** | 균형 있는 영구 디스크(Balanced) 선택 시 과금되므로 표준(Standard) 지정 (최대 30GB 무료) |
+| **네트워크 IP** | 임시 외부 IP (Ephemeral IP) | VM 실행 중 무료 제공 (미사용 고정 IP 예약 시 과금 방지) |
+| **네트워크 트래픽**| 월 1,000건 미만 (수십 MB 수준) | GCP 월 1 GB 아웃바운드(Egress) 무료 한도 이내 완전 충족 |
+
+#### 2) 초경량 환경 메모리 최적화 (Memory Tuning)
+`e2-micro`의 물리 RAM은 1GB에 불과하므로 JVM 구동 시 OOM(Out Of Memory) Killer 강제 종료를 방지하기 위해 2단계 가상 메모리 방어벽을 구축합니다:
+- **가상 메모리 (Swap File)**: 2GB 스왑 파일(`/swapfile`)을 활성화하여 실질 가용 메모리를 3GB 수준으로 확장.
+- **JVM 힙 메모리 제약**: `-Xms128m -Xmx384m` 옵션을 강제하여 스프링 부트 힙 메모리를 최대 384MB로 억제.
+- **타임존 동기화**: 서버 타임존 및 JVM 옵션에 `-Duser.timezone=Asia/Seoul`을 강제하여 스케줄러가 한국 표준시(KST)로 동작하도록 보장.
+
+#### 3) 보안 및 격리 설계 (Security Architecture)
+- **보안 격리**: 민감 토큰 및 서비스 계정 키(`~/app/credentials/*.json`)는 `chmod 600`으로 소유자 외 접근 전면 차단.
+- **인증 연동**: `GOOGLE_APPLICATION_CREDENTIALS` 환경변수를 systemd 서비스에 주입하여 GCP Secret Manager 및 Google Workspace API 인증 스코프 정상 획득.
+
+---
+
+### 7.4 코드 변경 및 기능 개수 후 재배포 절차 (Deployment & Maintenance Routine)
+
+기능 개선, 버그 수정, 템플릿 변경 등 코드 업데이트 후 무중단에 준하는 서비스 교체 절차는 다음과 같습니다:
+
+```mermaid
+flowchart LR
+    Dev["1. 로컬 PC 개발/수정"] --> Build["2. 로컬 빌드\n(bootJar)"]
+    Build --> Upload["3. GCP VM 업로드\n(Web SSH Upload)"]
+    Upload --> Deploy["4. 바이너리 교체 및 재시작\n(systemctl restart fates)"]
+    Deploy --> Verify["5. 로그 검증\n(journalctl -u fates -f)"]
+```
+
+#### [단계별 수행 명령어]
+
+1. **로컬 PC 빌드 (PowerShell)**:
+   ```powershell
+   # fates-system 루트 경로에서 수행 (약 20~30초 소요)
+   .\gradlew.bat bootJar -x test
+   ```
+   *생성 파일: `build/libs/fates-system-0.0.1-SNAPSHOT.jar`*
+
+2. **GCP 콘솔 웹 SSH로 JAR 파일 전송**:
+   - GCP 콘솔 > VM 인스턴스 > `fates-system` > **[SSH]** 터미널 접속.
+   - 상단 툴바의 **`⬆ ファイルをアップロード (파일 업로드)`** 클릭.
+   - 로컬의 `fates-system-0.0.1-SNAPSHOT.jar` 선택 후 전송 완료 대기.
+
+3. **VM 내 파일 교체 및 서비스 재시작 (원라인 명령어)**:
+   ```bash
+   # 새 JAR 파일로 교체 후 systemd 서비스 재시작
+   mv 'fates-system-0.0.1-SNAPSHOT_(5).jar' ~/app/fates-system-0.0.1-SNAPSHOT.jar && sudo systemctl restart fates
+   ```
+
+4. **배포 검증 및 모니터링**:
+   ```bash
+   # 실시간 구동 로그 확인
+   sudo journalctl -u fates.service -f
+
+   # 또는 애플리케이션 로그 파일 확인
+   tail -f ~/app/logs/fates-system.log
+   ```
+

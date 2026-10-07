@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 @Getter
 @Setter
@@ -27,6 +28,39 @@ public class AppProperties {
     private Shipping shipping = new Shipping();
     private ItNotice itNotice = new ItNotice();
     private ProfitReport profitReport = new ProfitReport();
+    private DailyLogReport dailyLogReport = new DailyLogReport();
+    private Ckline ckline = new Ckline();
+    private Sinokor sinokor = new Sinokor();
+    private Panocean panocean = new Panocean();
+
+    /**
+     * 선사별 공식 API 설정 Map. key=선사코드(소문자), value=API 설정.
+     * application.yml 예시:
+     *   fates:
+     *     carrier-apis:
+     *       one:
+     *         enabled: true
+     *         api-key: "your-one-api-key-here"
+     *       hmm:
+     *         enabled: false
+     *         api-key: ""
+     */
+    private Map<String, CarrierApiConfig> carrierApis = new LinkedHashMap<>();
+
+    @Getter
+    @Setter
+    public static class CarrierApiConfig {
+        /** 이 선사 API 사용 여부 */
+        private boolean enabled = true;
+        /** 공식 개발자 포털에서 발급받은 API Key (또는 Client ID) */
+        private String apiKey = "";
+        /** OAuth 2.0 인증용 Client ID */
+        private String clientId = "";
+        /** OAuth 2.0 인증용 Client Secret */
+        private String clientSecret = "";
+        /** 선택: API 베이스 URL 오버라이드 (예: https://mock.one-line.com 또는 https://api.one-line.com) */
+        private String baseUrl = "https://mock.one-line.com";
+    }
 
     @Getter
     @Setter
@@ -34,7 +68,9 @@ public class AppProperties {
         private boolean enabled = true;
         private String cron = "0 30 8 * * *"; // 매일 오전 8시 30분 정각
         private String baseUrl = "https://toyoshingo.com";
+        private String vssApiBaseUrl = "https://api-shipper.vessel-schedule-service.com/api/v1";
         private String spreadsheetId = ""; // 구글 시트 ID 또는 이름 "shipping-date"
+        private int fetchMonths = 2; // 수집 대상 개월 수 (기본 2개월)
         private Map<String, String> carriers = Map.ofEntries(
             Map.entry("HMM", "hmm"),
             Map.entry("SINOKOR", "sinokor"),
@@ -57,7 +93,11 @@ public class AppProperties {
             Map.entry("SITC", "sitc"),
             Map.entry("WANHAI", "wanhai"),
             Map.entry("NAMSUNG", "namsung"),
-            Map.entry("DONGJIN", "dongjin")
+            Map.entry("DONGJIN", "dongjin"),
+            Map.entry("OOCL", "oocl"),
+            Map.entry("INTERASIA", "interasia"),
+            Map.entry("DONGYOUNG", "dongyoung"),
+            Map.entry("KMTC", "kmtc")
         );
     }
 
@@ -85,6 +125,7 @@ public class AppProperties {
         private Instagram instagram = new Instagram();
         private Email email = new Email();
         private Drive drive = new Drive();
+        private Cafe24 cafe24 = new Cafe24();
 
         @Getter @Setter
         public static class Canva {
@@ -115,11 +156,23 @@ public class AppProperties {
             private String sender = "no-reply@fatesinc.com";
             private String draftTarget = "no-reply@fatesinc.com";
             private int bccChunkSize = 50;
+            private int draftSendDelaySeconds = 5;
+            private boolean autoSend = true;
         }
 
         @Getter @Setter
         public static class Drive {
             private String folderId = "1VLv23Hg5sl5Nd8kztGPnAfNj7a1J1C5R";
+        }
+
+        @Getter @Setter
+        public static class Cafe24 {
+            private boolean enabled = true;
+            private String endpoint = "https://fatesinc.mycafe24.com/JcBoard/board_complete.php";
+            private String tname = "guide";
+            private String author = "관리자";
+            private String password = "0381";
+            private String postLang = "ko";
         }
     }
 
@@ -160,9 +213,47 @@ public class AppProperties {
     @Setter
     public static class ProfitReport {
         private boolean enabled = true;
-        private String cron = "0 0 9 1 * *"; // 매달 1일 오전 9시
+        private String cron = "0 0 9 1 * *"; // 매달 25일 오전 9시
         private String sourceSpreadsheetId = "19VddLRj8KOczwN7tLPcKkJk1T0GVLNznwroaGj54BAU";
         private String targetSpreadsheetId = "1mcwgt1LzppZtdqGr94sjrL2Wa4ZdRPcqmIho1GHtAh0";
         private String targetFolderId = "1JvDIkArg_plVTAxZWq1AC7mHwKvV9yGh";
     }
+
+    @Getter
+    @Setter
+    public static class DailyLogReport {
+        private boolean enabled = true;
+        private String cron = "0 0 0 * * *";
+        private String sender = "cloud@fatesinc.com";
+        private String recipient = "cloud@fatesinc.com";
+        private String logFilePath = "logs/fates-system.log";
+    }
+
+    @Getter
+    @Setter
+    public static class Ckline {
+        private boolean enabled = true;
+        private String cron = "0 0 9 * * *"; // 매일 오전 9시 정각
+        private String spreadsheetId = "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs";
+        private int fetchMonths = 2;
+    }
+
+    @Getter
+    @Setter
+    public static class Sinokor {
+        private boolean enabled = true;
+        private String cron = "0 0 9 * * *"; // 매일 오전 9시 정각
+        private String spreadsheetId = "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs";
+        private int fetchMonths = 2; // 기본 2달치
+    }
+
+    @Getter
+    @Setter
+    public static class Panocean {
+        private boolean enabled = true;
+        private String cron = "0 10 9 * * *"; // 매일 오전 9시 10분 자동 동기화
+        private String spreadsheetId = "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs";
+        private int fetchMonths = 2; // 기본 2달치
+    }
 }
+

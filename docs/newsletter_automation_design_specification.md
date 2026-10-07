@@ -209,17 +209,26 @@ sequenceDiagram
   - `createSingleMediaContainer()` / `createCarouselContainer()`: 이미지 수량에 따라 Single Image Feed 또는 최대 10장의 Carousel Container 자동 구성.
   - `publishMedia()`: `media_publish` 엔드포인트를 호출하여 인스타그램 비즈니스 계정에 자동 게시.
 
-### 4.5 `NewsletterAutomationService`
+### 4.5 `Cafe24BoardService`
+- **역할**: 카페24 공식 홈페이지 게시판(JcBoard) 뉴스레터 자동 등록.
+- **주요 기능**:
+  - `uploadNewsletter(pdfBytes, fileName, designTitle)`:
+    - Canva에서 추출한 PDF 파일을 `ByteArrayResource`로 첨부(`userfile1`).
+    - 방안 B에 따른 주차별 한국어 요약 안내 본문 HTML(`buildHtmlBody()`) 구성.
+    - `post_lang="ko"`, `pass="0381"`, `name="관리자"`, `tname="guide"`, `mode="write"`, `vmode="Query"` 설정으로 `multipart/form-data` 요청 전송.
+    - 게시판 일시 오류 시에도 독립적 예외 격리로 후속 단계 정상 진행 보장.
+
+### 4.6 `NewsletterAutomationService`
 - **역할**: 전체 파이프라인 조율 오케스트레이터.
 - **순차 처리 로직**:
   1. `CanvaService.checkSourceFolderForDesign()` (소스 폴더 감시; 대상 디자인이 없으면 조용히 조기 종료)
   2. `CanvaService.processDesign()` (PDF 생성 및 Drive 업로드)
   3. `NewsletterEmailService.createDraftsWithAttachment()` (BCC 이메일 초안 생성)
-  4. `InstagramService.postNewsletter()` (인스타그램 게시; 활성화 시)
-  5. `CanvaService.moveDesignToArchive()` (아카이브 이동)
-  *(불필요한 GCP Secret Manager 동기화 단계는 완전 제거됨)*
+  4. `Cafe24BoardService.uploadNewsletter()` (카페24 공식 웹사이트 게시판 자동 업로드; 활성화 시)
+  5. `InstagramService.postNewsletter()` (인스타그램 게시; 활성화 시)
+  6. `CanvaService.moveDesignToArchive()` (아카이브 이동)
 
-### 4.6 `NewsletterScheduler` & `NewsletterController`
+### 4.7 `NewsletterScheduler` & `NewsletterController`
 - **스케줄러**: `@Scheduled(cron = "${fates.newsletter.cron:0 0 * * * *}")` 매시간 정각 자동 감지 및 실행 (`fates.newsletter.enabled=true` 시에만 동작).
 - **REST 컨트롤러**:
   - `POST /api/v1/newsletter/run`: 관리자 즉시 수동 실행 API 제공.
@@ -257,6 +266,13 @@ fates:
       bcc-chunk-size: 50
     drive:
       folder-id: "1VLv23Hg5sl5Nd8kztGPnAfNj7a1J1C5R" # PDF 저장 대상 폴더
+    cafe24:
+      enabled: true
+      endpoint: "https://fatesinc.mycafe24.com/JcBoard/board_complete.php"
+      tname: "guide"
+      author: "관리자"
+      password: "0381"
+      post-lang: "ko"
 ```
 
 ### 5.2 로컬 토큰 파일 구조 명세

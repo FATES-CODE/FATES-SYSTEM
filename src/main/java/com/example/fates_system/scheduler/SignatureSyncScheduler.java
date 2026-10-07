@@ -18,7 +18,7 @@ public class SignatureSyncScheduler {
 
     private final SignatureSyncService signatureSyncService;
 
-    @Scheduled(cron = "${fates.scheduler.cron:0 0 1 * * *}")
+    @Scheduled(cron = "${fates.scheduler.cron:0 0 0 * * *}")
     public void runScheduledSync() {
         log.info("정기 스케줄러에 의한 메일 서명 및 부재중 자동응답 동기화 실행 시작");
         try {

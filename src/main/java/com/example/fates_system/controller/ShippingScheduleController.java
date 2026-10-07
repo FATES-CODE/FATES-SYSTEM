@@ -27,30 +27,34 @@ public class ShippingScheduleController {
     }
 
     /**
-     * 당일(JST 기준) 일본->한국 출항 선박 스케줄 조회
-     * 예: GET /api/v1/shipping/schedules?carriers=HMM,CK LINE
+     * 일본->한국 출항 선박 스케줄 조회 (기본 2개월치, 2시간 인메모리 캐시 적용)
+     * 예: GET /api/v1/shipping/schedules?carriers=HMM,CK LINE&months=2
+     * 캐시 강제 갱신: GET /api/v1/shipping/schedules?refresh=true
      */
     @GetMapping("/schedules")
     public ResponseEntity<ShippingScheduleSummaryDto> getSchedules(
-            @RequestParam(value = "carriers", required = false) String carriersParam) {
+            @RequestParam(value = "carriers", required = false) String carriersParam,
+            @RequestParam(value = "months", required = false) Integer months,
+            @RequestParam(value = "refresh", defaultValue = "false") boolean refresh) {
 
         List<String> requestedCarriers = null;
         if (carriersParam != null && !carriersParam.isBlank()) {
             requestedCarriers = Arrays.asList(carriersParam.split(","));
         }
 
-        ShippingScheduleSummaryDto result = shippingScheduleService.fetchSchedules(requestedCarriers);
+        ShippingScheduleSummaryDto result = shippingScheduleService.fetchSchedules(requestedCarriers, months, refresh);
         return ResponseEntity.ok(result);
     }
 
     /**
-     * 구글 시트(shipping-date) 최신 선박 스케줄 동기화
+     * 구글 시트(shipping-date) 최신 선박 스케줄 동기화 (기본 2개월치)
      */
     @PostMapping("/update-sheet")
     public ResponseEntity<Map<String, String>> updateGoogleSheet(
-            @RequestParam(value = "spreadsheetId", required = false) String spreadsheetId) {
+            @RequestParam(value = "spreadsheetId", required = false) String spreadsheetId,
+            @RequestParam(value = "months", required = false) Integer months) {
 
-        boolean ok = shippingScheduleService.updateShippingGoogleSheet(spreadsheetId);
+        boolean ok = shippingScheduleService.updateShippingGoogleSheet(spreadsheetId, months);
         if (ok) {
             return ResponseEntity.ok(Map.of(
                     "status", "SUCCESS",

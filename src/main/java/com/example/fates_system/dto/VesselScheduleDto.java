@@ -15,6 +15,7 @@ public class VesselScheduleDto {
     private String voyage;
     private String pol;
     private String pod;
+    private String originalEta;
     private String arrival;
     private String berthing;
     private String sailing;
