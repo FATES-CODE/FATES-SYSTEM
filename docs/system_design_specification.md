@@ -281,7 +281,7 @@ fates:
     custom: "c_59413484b7a70585537d0853abb0b031e1b5124bff359f9519235fd99c0b43f4@group.calendar.google.com"
 
   target-emails:
-    - "cloud@fatesinc.com","tf1@fatesinc.com"
+    - "cloud@fatesinc.com"
 
   groups:
     seaimp1:

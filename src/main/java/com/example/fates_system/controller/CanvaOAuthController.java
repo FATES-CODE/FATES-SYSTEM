@@ -133,7 +133,7 @@ public class CanvaOAuthController {
                 canvaService.setCachedTokens(accessToken, expiresIn, refreshToken);
                 log.info("[CanvaOAuth] New refresh_token generated and saved locally: {}", refreshToken);
 
-                String status = "✅ 로컬 파일(credentials/canva-token.json)에 자동으로 저장되었습니다! 서버 재시작 후에도 영구 유지됩니다.";
+                String status = "로컬 파일(credentials/canva-token.json)에 자동으로 저장되었습니다! 서버 재시작 후에도 영구 유지됩니다.";
 
                 String html = "<html><body style='font-family:sans-serif;padding:30px;line-height:1.6;'>"
                         + "<h2 style='color:#2e7d32;'>Canva 인증 및 새 Refresh Token 발급 성공!</h2>"

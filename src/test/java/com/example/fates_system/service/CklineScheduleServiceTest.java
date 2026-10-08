@@ -1,7 +1,6 @@
 package com.example.fates_system.service;
 
 import com.example.fates_system.config.AppProperties;
-import com.example.fates_system.dto.CklineScheduleDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

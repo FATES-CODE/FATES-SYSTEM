@@ -120,7 +120,7 @@ fates:
   shipping:
     enabled: true
     cron: "0 30 8 * * *" # 매일 오전 8시 30분 정각 자동 수집 및 구글 시트 동기화
-    fetch-months: 2 # 수집 대상 개월 수 (기본 2개월치 수집)
+    fetch-months: 1 # 수집 대상 개월 수 (기본 1개월치 수집)
 
   profit-report:
     enabled: true
@@ -135,24 +135,6 @@ fates:
     sender: "cloud@fatesinc.com"
     recipient: "cloud@fatesinc.com"
     log-file-path: "logs/fates-system.log"
-
-  ckline:
-    enabled: true
-    cron: "0 0 9 * * *" # 매일 오전 9시 정각 자동 동기화
-    spreadsheet-id: "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs"
-    fetch-months: 2 # 수집 대상 개월 수 (기본 2개월)
-
-  sinokor:
-    enabled: true
-    cron: "0 0 9 * * *" # 매일 오전 9시 정각 자동 동기화
-    spreadsheet-id: "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs"
-    fetch-months: 2 # 수집 대상 개월 수 (기본 2개월)
-
-  panocean:
-    enabled: true
-    cron: "0 10 9 * * *" # 매일 오전 9시 10분 자동 동기화
-    spreadsheet-id: "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs"
-    fetch-months: 2 # 수집 대상 개월 수 (기본 2개월)
 
   # ─────────────────────────────────────────────────────────
   # 선사별 공식 API 설정

@@ -1,6 +1,5 @@
 package com.example.fates_system.service;
 
-import com.example.fates_system.dto.PanoceanScheduleDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
