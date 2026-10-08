@@ -10,7 +10,7 @@ fates:
     secret-manager:
       enabled: true
       project-id: "650454847556"
-      secret-name: "FATES-NEWSLETTER"
+      secret-name: "SecurityKeyMapping"
       version: "latest"
   
   calendars:
