@@ -29,9 +29,6 @@ public class AppProperties {
     private ItNotice itNotice = new ItNotice();
     private ProfitReport profitReport = new ProfitReport();
     private DailyLogReport dailyLogReport = new DailyLogReport();
-    private Ckline ckline = new Ckline();
-    private Sinokor sinokor = new Sinokor();
-    private Panocean panocean = new Panocean();
 
     /**
      * 선사별 공식 API 설정 Map. key=선사코드(소문자), value=API 설정.
@@ -197,7 +194,6 @@ public class AppProperties {
     @Getter
     @Setter
     public static class Calendars {
-        private String korea = "en.south_korea#holiday@group.v.calendar.google.com";
         private String japan = "en.japanese#holiday@group.v.calendar.google.com";
         private String custom = "c_59413484b7a70585537d0853abb0b031e1b5124bff359f9519235fd99c0b43f4@group.calendar.google.com";
     }
@@ -227,33 +223,6 @@ public class AppProperties {
         private String sender = "cloud@fatesinc.com";
         private String recipient = "cloud@fatesinc.com";
         private String logFilePath = "logs/fates-system.log";
-    }
-
-    @Getter
-    @Setter
-    public static class Ckline {
-        private boolean enabled = true;
-        private String cron = "0 0 9 * * *"; // 매일 오전 9시 정각
-        private String spreadsheetId = "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs";
-        private int fetchMonths = 2;
-    }
-
-    @Getter
-    @Setter
-    public static class Sinokor {
-        private boolean enabled = true;
-        private String cron = "0 0 9 * * *"; // 매일 오전 9시 정각
-        private String spreadsheetId = "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs";
-        private int fetchMonths = 2; // 기본 2달치
-    }
-
-    @Getter
-    @Setter
-    public static class Panocean {
-        private boolean enabled = true;
-        private String cron = "0 10 9 * * *"; // 매일 오전 9시 10분 자동 동기화
-        private String spreadsheetId = "11fc0ml4jJ24jsD1pUJ18K5RoRXcf4D0LcWcKFDuSMKs";
-        private int fetchMonths = 2; // 기본 2달치
     }
 }
 

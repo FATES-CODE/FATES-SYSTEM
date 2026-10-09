@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/newsletter/canva")git
+@RequestMapping("/api/v1/newsletter/canva")
 @RequiredArgsConstructor
 public class CanvaOAuthController {
 
