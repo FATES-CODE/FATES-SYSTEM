@@ -52,9 +52,7 @@ public class GoogleCalendarService {
 
         try {
             Calendar calendarClient = googleAuthService.getCalendarClient();
-            if (isKorea) {
-                fetchCalendarEvents(calendarClient, appProperties.getCalendars().getKorea(), startDate, endDate, isWeekdayHoliday, rawEvents);
-            } else {
+            if(!isKorea) {
                 // 1. 커스텀 캘린더 먼저 조회 (도메인 위임 사용하여 조직 내부 권한으로 상세 내용 조회)
                 List<HolidayEventDto> customEvents = new ArrayList<>();
                 String impersonateUser = (!appProperties.getTargetEmails().isEmpty()) ? appProperties.getTargetEmails().get(0) : "cloud@fatesinc.com";

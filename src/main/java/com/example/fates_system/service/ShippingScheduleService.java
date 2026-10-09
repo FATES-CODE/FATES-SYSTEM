@@ -1,6 +1,5 @@
 package com.example.fates_system.service;
 
-import com.example.fates_system.carrier.CarrierScheduleAdapter;
 import com.example.fates_system.config.AppProperties;
 import com.example.fates_system.dto.CarrierInfoDto;
 import com.example.fates_system.dto.ShippingScheduleSummaryDto;
@@ -65,22 +64,13 @@ public class ShippingScheduleService {
         }
     }
 
-    /** 선사 코드(대문자) → 어댑터 인스턴스 Map (Spring이 주입한 어댑터 자동 등록) */
-    private final Map<String, CarrierScheduleAdapter> adapterMap;
 
     public ShippingScheduleService(
             AppProperties appProperties,
-            GoogleAuthService googleAuthService,
-            List<CarrierScheduleAdapter> adapters) {
+            GoogleAuthService googleAuthService) {
         this.appProperties = appProperties;
         this.googleAuthService = googleAuthService;
-        this.adapterMap = adapters.stream()
-                .collect(Collectors.toMap(
-                        a -> a.getCarrierCode().toUpperCase(),
-                        a -> a,
-                        (a, b) -> a  // 동일 코드 충돌 시 첫 번째 우선
-                ));
-        log.info("[ShippingScheduleService] Registered carrier adapters: {}", adapterMap.keySet());
+        log.info("[ShippingScheduleService] Registered carrier adapters: {}");
     }
 
     private static final ZoneId JST = ZoneId.of("Asia/Tokyo");
@@ -298,34 +288,8 @@ public class ShippingScheduleService {
         return true;
     }
 
-    /**
-     * 단일 선사 스케줄 수집.
-     *
-     * <p>우선순위:
-     * <ol>
-     *   <li><b>공식 API 어댑터</b> - API Key가 설정된 선사는 공식 REST API 사용 (크롤링 없음)</li>
-     *   <li><b>VSS REST API</b>  - vessel-schedule-service.com API 시도</li>
-     *   <li><b>레거시 크롤링</b>  - toyoshingo.com HTML 파싱 (최후 fallback)</li>
-     * </ol>
-     */
-    private List<VesselScheduleDto> fetchSingleCarrier(String carrierName, String slug, LocalDate today) {
-        // 1. 공식 API 어댑터 시도 (API Key가 설정된 선사만)
-        CarrierScheduleAdapter adapter = adapterMap.get(carrierName.toUpperCase());
-        if (adapter != null && adapter.isAvailable()) {
-            try {
-                List<VesselScheduleDto> apiResult = adapter.fetchSchedules(today);
-                if (apiResult != null && !apiResult.isEmpty()) {
-                    log.info("[ShippingScheduleService] '{}' fetched {} schedules via official API adapter",
-                            carrierName, apiResult.size());
-                    return apiResult;
-                }
-                log.debug("[ShippingScheduleService] Official API adapter for '{}' returned empty, falling back.", carrierName);
-            } catch (Exception e) {
-                log.warn("[ShippingScheduleService] Official API adapter error for '{}': {}", carrierName, e.getMessage());
-            }
-        }
 
-        // 2. 신규 VSS REST API (vessel-schedule-service.com) 호출 시도
+    private List<VesselScheduleDto> fetchSingleCarrier(String carrierName, String slug, LocalDate today) {
         try {
             List<VesselScheduleDto> vssList = fetchFromVssApi(carrierName, slug, today);
             if (vssList != null && !vssList.isEmpty()) {

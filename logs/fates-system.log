@@ -194,3 +194,63 @@
 2026-10-09T16:00:00.520+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.s.NewsletterAutomationService      : [Pipeline] No new design found in Canva source folder. Skipping subsequent steps.
 2026-10-09T16:00:00.520+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.config.PerformanceLogAspect        : [PERF] NewsletterAutomationService.run() 소요 시간: 362 ms
 2026-10-09T16:00:00.520+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.config.PerformanceLogAspect        : [PERF] NewsletterScheduler.runNewsletterAutomation() 소요 시간: 421 ms
+2026-10-09T17:00:00.283+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.scheduler.NewsletterScheduler      : [NewsletterScheduler] Trigger fired - starting automation
+2026-10-09T17:00:00.349+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.s.NewsletterAutomationService      : === Newsletter Automation Pipeline START ===
+2026-10-09T17:00:00.353+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.s.NewsletterAutomationService      : [Pipeline] Step 0: Checking Canva source folder for new newsletter design...
+2026-10-09T17:00:00.976+09:00  WARN 6184 --- [fates-system] [scheduling-1] c.e.fates_system.service.CanvaService    : [CanvaService] Token refresh failed (400): {"code":"invalid_request","message":"Malformed encoded client ID and secret"}
+2026-10-09T17:00:00.976+09:00 ERROR 6184 --- [fates-system] [scheduling-1] c.e.fates_system.service.CanvaService    : [CanvaService] Unable to obtain Canva access token. Please visit http://127.0.0.1:8080/api/v1/newsletter/canva/auth-url to authorize Canva.
+2026-10-09T17:00:00.976+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.config.PerformanceLogAspect        : [PERF] CanvaService.checkSourceFolderForDesign() 소요 시간: 616 ms
+2026-10-09T17:00:00.976+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.s.NewsletterAutomationService      : [Pipeline] No new design found in Canva source folder. Skipping subsequent steps.
+2026-10-09T17:00:00.977+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.config.PerformanceLogAspect        : [PERF] NewsletterAutomationService.run() 소요 시간: 630 ms
+2026-10-09T17:00:00.977+09:00  INFO 6184 --- [fates-system] [scheduling-1] c.e.f.config.PerformanceLogAspect        : [PERF] NewsletterScheduler.runNewsletterAutomation() 소요 시간: 829 ms
+2026-10-09T17:05:32.666+09:00  INFO 12864 --- [fates-system] [main] c.e.fates_system.FatesSystemApplication  : Starting FatesSystemApplication using Java 17.0.19 with PID 12864 (C:\Users\FATES\Desktop\fates-system\fates-system\build\classes\java\main started by FATES in C:\Users\FATES\Desktop\fates-system\fates-system)
+2026-10-09T17:05:32.671+09:00  INFO 12864 --- [fates-system] [main] c.e.fates_system.FatesSystemApplication  : No active profile set, falling back to 1 default profile: "default"
+2026-10-09T17:05:34.164+09:00  INFO 12864 --- [fates-system] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-09T17:05:34.183+09:00  INFO 12864 --- [fates-system] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-09T17:05:34.184+09:00  INFO 12864 --- [fates-system] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-09T17:05:34.264+09:00  INFO 12864 --- [fates-system] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1529 ms
+2026-10-09T17:05:34.834+09:00  INFO 12864 --- [fates-system] [main] c.e.f.service.GoogleAuthService          : GCP Secret Manager로부터 보안 설정값 로드 시도: projects/650454847556/secrets/SecurityKeyMapping/versions/latest
+2026-10-09T17:05:36.525+09:00  INFO 12864 --- [fates-system] [main] c.e.f.service.GoogleAuthService          : GCP Secret Manager로부터 서비스 계정 자격증명 로드 성공
+2026-10-09T17:05:36.525+09:00  INFO 12864 --- [fates-system] [main] c.e.f.service.GoogleAuthService          : Google 인증 서비스 초기화 완료
+2026-10-09T17:05:36.709+09:00  INFO 12864 --- [fates-system] [main] c.e.f.service.ShippingScheduleService    : [ShippingScheduleService] Registered carrier adapters: {}
+2026-10-09T17:05:37.229+09:00  WARN 12864 --- [fates-system] [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.context.ApplicationContextException: Failed to start bean 'webServerStartStop'
+2026-10-09T17:05:37.246+09:00  INFO 12864 --- [fates-system] [main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-10-09T17:05:37.265+09:00 ERROR 12864 --- [fates-system] [main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Web server failed to start. Port 8080 was already in use.
+
+Action:
+
+Identify and stop the process that's listening on port 8080 or configure this application to listen on another port.
+
+2026-10-09T17:08:21.324+09:00  INFO 13132 --- [fates-system] [main] c.e.fates_system.FatesSystemApplication  : Starting FatesSystemApplication using Java 17.0.19 with PID 13132 (C:\Users\FATES\Desktop\fates-system\fates-system\build\classes\java\main started by FATES in C:\Users\FATES\Desktop\fates-system\fates-system)
+2026-10-09T17:08:21.330+09:00  INFO 13132 --- [fates-system] [main] c.e.fates_system.FatesSystemApplication  : No active profile set, falling back to 1 default profile: "default"
+2026-10-09T17:08:22.796+09:00  INFO 13132 --- [fates-system] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-09T17:08:22.816+09:00  INFO 13132 --- [fates-system] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-09T17:08:22.817+09:00  INFO 13132 --- [fates-system] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-09T17:08:22.895+09:00  INFO 13132 --- [fates-system] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1506 ms
+2026-10-09T17:08:23.544+09:00  INFO 13132 --- [fates-system] [main] c.e.f.service.GoogleAuthService          : GCP Secret Manager로부터 보안 설정값 로드 시도: projects/650454847556/secrets/SecurityKeyMapping/versions/latest
+2026-10-09T17:08:25.378+09:00  INFO 13132 --- [fates-system] [main] c.e.f.service.GoogleAuthService          : GCP Secret Manager로부터 서비스 계정 자격증명 로드 성공
+2026-10-09T17:08:25.378+09:00  INFO 13132 --- [fates-system] [main] c.e.f.service.GoogleAuthService          : Google 인증 서비스 초기화 완료
+2026-10-09T17:08:25.578+09:00  INFO 13132 --- [fates-system] [main] c.e.f.service.ShippingScheduleService    : [ShippingScheduleService] Registered carrier adapters: {}
+2026-10-09T17:08:26.123+09:00  INFO 13132 --- [fates-system] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-10-09T17:08:26.134+09:00  INFO 13132 --- [fates-system] [main] c.e.fates_system.FatesSystemApplication  : Started FatesSystemApplication in 5.492 seconds (process running for 6.067)
+2026-10-09T17:09:13.651+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-09T17:09:13.652+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-09T17:09:13.653+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-10-09T17:09:13.699+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.f.s.NewsletterAutomationService      : === Newsletter Automation Pipeline START ===
+2026-10-09T17:09:13.699+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.f.s.NewsletterAutomationService      : [Pipeline] Step 0: Checking Canva source folder for new newsletter design...
+2026-10-09T17:09:14.152+09:00  WARN 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.fates_system.service.CanvaService    : [CanvaService] Token refresh failed (400): {"code":"invalid_request","message":"Malformed encoded client ID and secret"}
+2026-10-09T17:09:14.152+09:00 ERROR 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.fates_system.service.CanvaService    : [CanvaService] Unable to obtain Canva access token. Please visit http://127.0.0.1:8080/api/v1/newsletter/canva/auth-url to authorize Canva.
+2026-10-09T17:09:14.152+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.f.config.PerformanceLogAspect        : [PERF] CanvaService.checkSourceFolderForDesign() 소요 시간: 452 ms
+2026-10-09T17:09:14.152+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.f.s.NewsletterAutomationService      : [Pipeline] No new design found in Canva source folder. Skipping subsequent steps.
+2026-10-09T17:09:14.153+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.f.config.PerformanceLogAspect        : [PERF] NewsletterAutomationService.run() 소요 시간: 454 ms
+2026-10-09T17:09:14.158+09:00  INFO 13132 --- [fates-system] [http-nio-8080-exec-1] c.e.f.config.PerformanceLogAspect        : [PERF] NewsletterController.triggerNewsletter() 소요 시간: 459 ms
