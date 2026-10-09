@@ -4,6 +4,7 @@ import com.example.fates_system.config.AppProperties;
 import com.example.fates_system.service.ShippingScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "fates.shipping", name = "enabled", havingValue = "true")
 public class ShippingScheduleScheduler {
 
     private final AppProperties appProperties;

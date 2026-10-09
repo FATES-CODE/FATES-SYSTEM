@@ -14,7 +14,6 @@ fates:
       version: "latest"
   
   calendars:
-    korea: "en.south_korea#holiday@group.v.calendar.google.com"
     japan: "en.japanese#holiday@group.v.calendar.google.com"
     custom: "c_59413484b7a70585537d0853abb0b031e1b5124bff359f9519235fd99c0b43f4@group.calendar.google.com"
 
@@ -145,7 +144,7 @@ fates:
     # ONE (Ocean Network Express) DCSA v2.2 Track & Trace / Schedules
     # 등록: ONE Developer Portal -> Token: POST /v1/oauth/accesstoken -> Events: GET /v2/events
     one:
-      enabled: ${ONE_API_ENABLED:true}
+      enabled: ${ONE_API_ENABLED:false}
       base-url: ${ONE_API_BASE_URL:https://mock.one-line.com}
       client-id: ${ONE_CLIENT_ID:}
       client-secret: ${ONE_CLIENT_SECRET:}
