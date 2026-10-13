@@ -75,8 +75,27 @@ public class GcpSecretService {
         // Fallbacks from application.yml / env
         AppProperties.Newsletter.Canva canvaCfg = appProperties.getNewsletter().getCanva();
         if (clientId == null) clientId = canvaCfg.getClientId();
-        if (clientSecret == null) clientSecret = canvaCfg.getClientSecret();
-        if (refreshToken == null) refreshToken = canvaCfg.getRefreshToken();
+        if (clientSecret == null) clientSecret = blankToNull(canvaCfg.getClientSecret());
+        if (refreshToken == null) refreshToken = blankToNull(canvaCfg.getRefreshToken());
+
+        // Fallback: credentials/canva-token.json 파일에서 직접 읽기
+        if (clientSecret == null || refreshToken == null) {
+            String tokenPath = canvaCfg.getTokenFilePath();
+            if (tokenPath != null && !tokenPath.isBlank()) {
+                java.io.File tokenFile = new java.io.File(tokenPath);
+                if (tokenFile.exists()) {
+                    try {
+                        JsonNode tokenNode = objectMapper.readTree(tokenFile);
+                        if (clientId == null)     clientId     = blankToNull(findValue(tokenNode, "client_id"));
+                        if (clientSecret == null) clientSecret = blankToNull(findValue(tokenNode, "client_secret"));
+                        if (refreshToken == null) refreshToken = blankToNull(findValue(tokenNode, "refresh_token", "canva_refresh_token"));
+                        log.info("[GcpSecretService] Canva credentials loaded from token file: {}", tokenPath);
+                    } catch (Exception e) {
+                        log.warn("[GcpSecretService] Failed to read canva token file {}: {}", tokenPath, e.getMessage());
+                    }
+                }
+            }
+        }
 
         if (clientId == null || clientSecret == null || (refreshToken == null && authCode == null)) {
             log.error("[GcpSecretService] Missing Canva credential fields (clientId={}, clientSecret={}, refreshToken={}, authCode={})",
@@ -99,8 +118,30 @@ public class GcpSecretService {
 
         // Fallbacks from application.yml / env
         AppProperties.Newsletter.Instagram instaCfg = appProperties.getNewsletter().getInstagram();
-        if (accountId == null) accountId = instaCfg.getAccountId();
-        if (accessToken == null) accessToken = instaCfg.getAccessToken();
+        if (accountId == null)   accountId   = instaCfg.getAccountId();
+        if (accessToken == null) accessToken = blankToNull(instaCfg.getAccessToken());
+        if (appId == null)       appId       = blankToNull(instaCfg.getAppId());
+        if (appSecret == null)   appSecret   = blankToNull(instaCfg.getAppSecret());
+
+        // Fallback: credentials/instagram-token.json 파일에서 직접 읽기
+        if (accessToken == null || appId == null || appSecret == null) {
+            String tokenPath = instaCfg.getTokenFilePath();
+            if (tokenPath != null && !tokenPath.isBlank()) {
+                java.io.File tokenFile = new java.io.File(tokenPath);
+                if (tokenFile.exists()) {
+                    try {
+                        JsonNode tokenNode = objectMapper.readTree(tokenFile);
+                        if (accessToken == null) accessToken = blankToNull(findValue(tokenNode, "access_token"));
+                        if (accountId == null)   accountId   = blankToNull(findValue(tokenNode, "account_id"));
+                        if (appId == null)       appId       = blankToNull(findValue(tokenNode, "app_id", "instagram_app_id"));
+                        if (appSecret == null)   appSecret   = blankToNull(findValue(tokenNode, "app_secret", "instagram_app_secret"));
+                        log.info("[GcpSecretService] Instagram credentials loaded from token file: {}", tokenPath);
+                    } catch (Exception e) {
+                        log.warn("[GcpSecretService] Failed to read instagram token file {}: {}", tokenPath, e.getMessage());
+                    }
+                }
+            }
+        }
 
         if (accountId == null || accessToken == null) {
             log.warn("[GcpSecretService] Missing Instagram credential fields (accountId={}, accessToken={})",
@@ -187,6 +228,10 @@ public class GcpSecretService {
             }
         }
         return null;
+    }
+
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value;
     }
 
     public record CanvaCredentials(String clientId, String clientSecret, String refreshToken, String authCode) {}

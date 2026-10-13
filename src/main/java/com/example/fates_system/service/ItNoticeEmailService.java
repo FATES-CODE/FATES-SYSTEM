@@ -4,6 +4,7 @@ import com.example.fates_system.config.AppProperties;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Draft;
+import com.google.api.services.gmail.model.ListDraftsResponse;
 import com.google.api.services.gmail.model.Message;
 import jakarta.activation.DataHandler;
 import jakarta.mail.Session;
@@ -21,6 +22,7 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.List;
 import java.util.Properties;
 
 @Slf4j
@@ -93,6 +95,10 @@ public class ItNoticeEmailService {
             draft.setMessage(gmailMessage);
 
             Gmail gmailClient = googleAuthService.getGmailClientForUser(sender);
+
+            // 기존에 생성되어 있는 IT 공지 드래프트 메일이 있다면 삭제하여 항상 1개만 유지
+            deleteExistingItNoticeDrafts(gmailClient);
+
             Draft createdDraft = gmailClient.users().drafts().create("me", draft).execute();
 
             log.info("[ItNoticeEmailService] Successfully created IT Notice Draft with ID: {}", createdDraft.getId());
@@ -104,13 +110,38 @@ public class ItNoticeEmailService {
         }
     }
 
+    /**
+     * 기존 IT 보안 공지 드래프트 메일을 검색하여 모두 삭제합니다.
+     */
+    private void deleteExistingItNoticeDrafts(Gmail gmailClient) {
+        try {
+            ListDraftsResponse draftsResponse = gmailClient.users().drafts().list("me")
+                    .setQ("subject:\"PC 및 자료 관리에 대한 정기 안내\"")
+                    .execute();
+            List<Draft> drafts = draftsResponse.getDrafts();
+            if (drafts != null && !drafts.isEmpty()) {
+                log.info("[ItNoticeEmailService] 기존 IT Notice 드래프트 {}개 발견. 삭제 진행...", drafts.size());
+                for (Draft d : drafts) {
+                    try {
+                        gmailClient.users().drafts().delete("me", d.getId()).execute();
+                        log.info("[ItNoticeEmailService] 기존 IT Notice 드래프트 삭제 완료 (ID: {})", d.getId());
+                    } catch (Exception ex) {
+                        log.warn("[ItNoticeEmailService] 기존 드래프트 (ID: {}) 삭제 실패: {}", d.getId(), ex.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[ItNoticeEmailService] 기존 드래프트 정리 중 오류 발생 (무시하고 계속 진행): {}", e.getMessage());
+        }
+    }
+
     private MimeMessage buildMimeMessage(AppProperties.ItNotice config, String sender, String recipient, String cc) throws Exception {
         // 1. Google Drive에서 이미지 4개 다운로드
         byte[] img1 = downloadDriveFile(config.getImage1Id());
         byte[] img2 = downloadDriveFile(config.getImage2Id());
         byte[] img3 = downloadDriveFile(config.getImage3Id());
         byte[] img4 = downloadDriveFile(config.getImage4Id());
-
+        byte[] img5 = downloadDriveFile(config.getImage5Id());
         // 2. 메일 제목 생성 (오늘 날짜 포함)
         String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
         String subject = "<INTERNAL> PC 및 자료 관리에 대한 정기 안내 (" + todayStr + ")";
@@ -142,7 +173,7 @@ public class ItNoticeEmailService {
         addImagePart(multipart, img2, "image2");
         addImagePart(multipart, img3, "image3");
         addImagePart(multipart, img4, "image4");
-
+        addImagePart(multipart, img5, "image5");
         mimeMessage.setContent(multipart);
         return mimeMessage;
     }
@@ -182,6 +213,9 @@ public class ItNoticeEmailService {
         return """
   <div style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #222222; line-height: 1.6;">
   <p style="margin: 0 0 15px;">社員各位</p>
+  <div style="margin-bottom: 15px;">
+        <img src="cid:image5" alt="test" style="border: none; max-width: 100%;">
+    </div>
   <p style="margin: 0 0 15px;">お疲れ様です。</p>
 <p style="margin: 0 0 15px;">日頃ご利用のPCやGoogle共有ドライブなどを、<br>
     より安全かつ快適にご利用いただくため、関連情報を社内にて定期的にご案内いたします。</p>

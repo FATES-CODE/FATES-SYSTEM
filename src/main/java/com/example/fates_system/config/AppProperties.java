@@ -30,18 +30,6 @@ public class AppProperties {
     private ProfitReport profitReport = new ProfitReport();
     private DailyLogReport dailyLogReport = new DailyLogReport();
 
-    /**
-     * 선사별 공식 API 설정 Map. key=선사코드(소문자), value=API 설정.
-     * application.yml 예시:
-     *   fates:
-     *     carrier-apis:
-     *       one:
-     *         enabled: true
-     *         api-key: "your-one-api-key-here"
-     *       hmm:
-     *         enabled: false
-     *         api-key: ""
-     */
     private Map<String, CarrierApiConfig> carrierApis = new LinkedHashMap<>();
 
     @Getter
@@ -110,6 +98,7 @@ public class AppProperties {
         private String image2Id = "1eW6KyZxDppJ-AuY5T4vuE50RqNL9UDRc";
         private String image3Id = "11gdrrUghvJAb6EIJW8XM52eFZWNvBmT6";
         private String image4Id = "1mUgHabKGmBexebKVdjTKmQSdA7AQi6MA";
+        private String image5Id = "1AZdsCrYOvfZAJndCoX0FfyRx2uhs68_S";
     }
 
     @Getter
@@ -143,6 +132,8 @@ public class AppProperties {
             private int maxCarouselItems = 10;
             private long publishWaitMs = 3000;
             private String accountId = "17841471452286580";
+            private String appId;
+            private String appSecret;
             private String accessToken;
             private String tokenFilePath = "credentials/instagram-token.json";
         }
@@ -150,7 +141,9 @@ public class AppProperties {
         @Getter @Setter
         public static class Email {
             private String spreadsheetId = "1-yK3rYddxNqp3SPVyX7yYLTSr3psUGZUSMukbPui2bg";
-            private String sender = "no-reply@fatesinc.com";
+            private String accountEmail = "cloud@fatesinc.com";
+            private String sender = "NO-REPLY <no-reply@fatesinc.com>";
+            private String replyTo = "no_reply@fatesinc.com";
             private String draftTarget = "no-reply@fatesinc.com";
             private int bccChunkSize = 50;
             private int draftSendDelaySeconds = 5;
@@ -220,7 +213,7 @@ public class AppProperties {
     public static class DailyLogReport {
         private boolean enabled = true;
         private String cron = "0 0 0 * * *";
-        private String sender = "cloud@fatesinc.com";
+        private String sender = "no_reply@fatesinc.com";
         private String recipient = "cloud@fatesinc.com";
         private String logFilePath = "logs/fates-system.log";
     }

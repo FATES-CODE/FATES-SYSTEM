@@ -256,11 +256,9 @@ public class GoogleCalendarService {
             String summary = String.join(", ", g.names);
             String upper = summary.toUpperCase();
 
-            // 5월: MonthValue=5 (JS에서는 getMonth() === 4)
             if (upper.contains("GOLDEN") || (g.start.getMonthValue() == 5 && g.names.size() > 1)) {
                 summary = "Golden Week";
             }
-            // 9월: MonthValue=9 (JS에서는 getMonth() === 8)
             else if (upper.contains("SILVER") || (g.start.getMonthValue() == 9 && g.names.size() > 1)) {
                 summary = "Silver Week";
             } else if (upper.contains("NEW")) {

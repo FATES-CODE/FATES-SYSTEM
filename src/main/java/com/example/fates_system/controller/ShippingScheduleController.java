@@ -47,7 +47,7 @@ public class ShippingScheduleController {
     }
 
     /**
-     * 구글 시트(shipping-date) 최신 선박 스케줄 동기화 (기본 2개월치)
+     * 구글 시트(shipping-date) 최신 선박 스케줄 동기화 (기본 1개월치)
      */
     @PostMapping("/update-sheet")
     public ResponseEntity<Map<String, String>> updateGoogleSheet(

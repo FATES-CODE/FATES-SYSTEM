@@ -35,6 +35,7 @@ public class CanvaService {
 
     private final AppProperties appProperties;
     private final GoogleAuthService googleAuthService;
+    private final GcpSecretService gcpSecretService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -252,6 +253,7 @@ public class CanvaService {
                     if (json.has("refresh_token")) {
                         String newRefreshToken = json.get("refresh_token").asText();
                         saveRefreshTokenLocally(newRefreshToken);
+                        gcpSecretService.updateCanvaRefreshToken(newRefreshToken);
                     }
                     return cachedAccessToken;
                 }
@@ -379,13 +381,16 @@ public class CanvaService {
 
     private String uploadToDrive(byte[] data, String fileName) {
         String folderId = appProperties.getNewsletter().getDrive().getFolderId();
-        String senderEmail = appProperties.getNewsletter().getEmail().getSender();
+        String accountEmail = appProperties.getNewsletter().getEmail().getAccountEmail();
+        if (accountEmail == null || accountEmail.isBlank()) {
+            accountEmail = "cloud@fatesinc.com";
+        }
         try {
             Drive drive;
             try {
-                drive = googleAuthService.getDriveClientForUser(senderEmail);
+                drive = googleAuthService.getDriveClientForUser(accountEmail);
             } catch (Exception e) {
-                log.warn("[CanvaService] Failed to get delegated Drive client for '{}', using default service account client: {}", senderEmail, e.getMessage());
+                log.warn("[CanvaService] Failed to get delegated Drive client for '{}', using default service account client: {}", accountEmail, e.getMessage());
                 drive = googleAuthService.getDriveClient();
             }
             File metadata = new File();

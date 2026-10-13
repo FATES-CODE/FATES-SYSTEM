@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import jakarta.activation.DataHandler;
+import jakarta.mail.Address;
 import jakarta.mail.Session;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
@@ -44,7 +45,10 @@ public class NewsletterEmailService {
     public boolean createDraftsWithAttachment(byte[] pdfBytes, String fileName) {
         try {
             AppProperties.Newsletter.Email cfg = appProperties.getNewsletter().getEmail();
+            String accountEmail = (cfg.getAccountEmail() != null && !cfg.getAccountEmail().isBlank())
+                    ? cfg.getAccountEmail() : "cloud@fatesinc.com";
             String sender      = cfg.getSender();
+            String replyTo     = cfg.getReplyTo();
             String draftTarget = cfg.getDraftTarget();
             int chunkSize      = cfg.getBccChunkSize();
             List<EmailBatch> batches = extractUniqueEmails();
@@ -52,14 +56,14 @@ public class NewsletterEmailService {
                 log.warn("[NewsletterEmailService] No valid recipient emails found");
                 return true;
             }
-            Gmail gmail = googleAuthService.getGmailClientForUser(sender);
+            Gmail gmail = googleAuthService.getGmailClientForUser(accountEmail);
             String subject  = buildSubject();
             String htmlBody = buildHtmlBody();
             for (EmailBatch batch : batches) {
                 List<String> emails = batch.emails();
                 for (int i = 0; i < emails.size(); i += chunkSize) {
                     List<String> chunk = emails.subList(i, Math.min(i + chunkSize, emails.size()));
-                    Draft draft = buildDraft(sender, draftTarget, String.join(",", chunk),
+                    Draft draft = buildDraft(sender, replyTo, draftTarget, String.join(",", chunk),
                             subject, htmlBody, pdfBytes, fileName);
                     gmail.users().drafts().create("me", draft).execute();
                     log.info("[NewsletterEmailService] [{}] col{} - {} recipients draft created",
@@ -180,12 +184,15 @@ public class NewsletterEmailService {
                 + "<p>파테스 임직원 드림</p>";
     }
 
-    private Draft buildDraft(String from, String to, String bcc,
+    private Draft buildDraft(String from, String replyTo, String to, String bcc,
                              String subject, String htmlBody,
                              byte[] pdfBytes, String fileName) throws Exception {
         Session session = Session.getDefaultInstance(new Properties(), null);
         MimeMessage email = new MimeMessage(session);
         email.setFrom(new InternetAddress(from));
+        if (replyTo != null && !replyTo.isBlank()) {
+            email.setReplyTo(new Address[]{new InternetAddress(replyTo)});
+        }
         email.addRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(to));
         email.addRecipients(jakarta.mail.Message.RecipientType.BCC, InternetAddress.parse(bcc));
         email.setSubject(subject, "UTF-8");
@@ -211,18 +218,19 @@ public class NewsletterEmailService {
 
     public SendDraftsResult sendPendingDrafts(Integer customDelaySeconds) {
         AppProperties.Newsletter.Email cfg = appProperties.getNewsletter().getEmail();
-        String sender = cfg.getSender();
+        String accountEmail = (cfg.getAccountEmail() != null && !cfg.getAccountEmail().isBlank())
+                ? cfg.getAccountEmail() : "cloud@fatesinc.com";
         int delaySeconds = customDelaySeconds != null && customDelaySeconds >= 0
                 ? customDelaySeconds
                 : cfg.getDraftSendDelaySeconds();
 
         try {
-            Gmail gmail = googleAuthService.getGmailClientForUser(sender);
+            Gmail gmail = googleAuthService.getGmailClientForUser(accountEmail);
             ListDraftsResponse draftsResponse = gmail.users().drafts().list("me").execute();
             List<Draft> drafts = draftsResponse.getDrafts();
 
             if (drafts == null || drafts.isEmpty()) {
-                log.info("[NewsletterEmailService] No pending drafts found for {}", sender);
+                log.info("[NewsletterEmailService] No pending drafts found for {}", accountEmail);
                 return new SendDraftsResult(0, 0, 0, "No pending drafts to send.");
             }
 

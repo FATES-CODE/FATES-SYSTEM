@@ -24,12 +24,6 @@ public class HtmlSignatureBuilder {
             Pattern.CASE_INSENSITIVE
     );
 
-    /**
-     * seaimp/BAF 서명용 강화 클린업 패턴.
-     * 실제 Gmail 서명에서 HOLIDAY NOTICE는 color:red 스타일의 span 안에 여러 겹으로 중첩되어 있음.
-     * 예: &lt;span color:red&gt;&lt;div/&gt;&lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;span&gt;&lt;span&gt;**HOLIDAY NOTICE**...&lt;/span&gt;×5&lt;/span&gt;
-     * 이 패턴은 색상이 red인 span에서 HOLIDAY NOTICE 포함 여부를 확인 후 최대 15개의 닫는 span까지 제거함.
-     */
     private static final Pattern BAF_NOTICE_CLEANUP_PATTERN = Pattern.compile(
             "<span[^>]*?color\\s*:\\s*(?:red|#[Ff]{2}0{4})[^>]*>[\\s\\S]*?\\*\\*HOLIDAY NOTICE\\*\\*[\\s\\S]*?(?:</span>\\s*){1,15}(?:<br[^>]*>\\s*)*",
             Pattern.CASE_INSENSITIVE
@@ -138,11 +132,6 @@ public class HtmlSignatureBuilder {
         return buildSignatureCommon(cleaned, holidayBlock);
     }
 
-    /**
-     * BAF/SEAIMP 서명용 강화 클린업.
-     * NOTICE_PATTERN(DEFAULT/BL1용)과 달리 color:red span을 기준으로 탐지하므로
-     * Gmail이 생성한 복잡한 중첩 구조(최대 15겹 닫는 span)를 모두 제거.
-     */
     public String cleanExistingHolidayNotices(String currentSignature) {
         if (currentSignature == null) {
             return "";
@@ -150,11 +139,6 @@ public class HtmlSignatureBuilder {
         return BAF_NOTICE_CLEANUP_PATTERN.matcher(currentSignature).replaceAll("");
     }
 
-    /**
-     * fromPos(● 문자 위치)에서 역방향으로 스캔하여
-     * ●을 감싼 가장 가까운 블록 오프닝 태그(&lt;p&gt;, &lt;div&gt;, &lt;table&gt;)의 시작 위치를 반환.
-     * 블록 태그가 없으면 fromPos를 그대로 반환(● 앞에 삽입).
-     */
     private int findNearestBlockStart(String sig, int fromPos) {
         for (int pos = fromPos - 1; pos >= 0; pos--) {
             if (sig.charAt(pos) == '>') {

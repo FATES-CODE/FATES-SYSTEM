@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.model.ClearValuesRequest;
 import com.google.api.services.sheets.v4.model.ValueRange;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -23,6 +22,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -41,6 +41,7 @@ public class ShippingScheduleService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.ALWAYS)
+            .connectTimeout(Duration.ofSeconds(10)) // 연결 타임아웃 10초
             .build();
 
     /** IP 차단 방지: 동시 요청을 최대 3개로 제한하는 전용 스레드 풀 */
@@ -323,6 +324,7 @@ public class ShippingScheduleService {
                         .uri(URI.create(apiUrl))
                         .header("User-Agent", USER_AGENT)
                         .header("Accept", "application/json")
+                        .timeout(Duration.ofSeconds(30)) // 응답 타임아웃 30초
                         .GET()
                         .build();
 
@@ -484,6 +486,7 @@ public class ShippingScheduleService {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(carrierBaseUrl))
                     .header("User-Agent", USER_AGENT)
+                    .timeout(Duration.ofSeconds(30)) // 응답 타임아웃 30초
                     .GET()
                     .build();
 
@@ -563,6 +566,7 @@ public class ShippingScheduleService {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(portUrl))
                     .header("User-Agent", USER_AGENT)
+                    .timeout(Duration.ofSeconds(30)) // 응답 타임아웃 30초
                     .GET()
                     .build();
 
@@ -910,7 +914,7 @@ public class ShippingScheduleService {
             ShippingScheduleSummaryDto summary = fetchSchedules(null, months, true);
             Sheets sheetsClient = googleAuthService.getSheetsClient();
 
-            // A1:J5000 범위 클리어 (2개월치 대량 데이터 반영)
+            // A1:J5000 범위 클리어 (1개월치 대량 데이터 반영)
             try {
                 sheetsClient.spreadsheets().values()
                         .clear(targetSpreadsheetId, "A1:J5000", new ClearValuesRequest())

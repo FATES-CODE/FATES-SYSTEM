@@ -85,15 +85,19 @@ fates:
       enabled: true
       api-version: "v19.0"
       account-id: "17841471452286580"
+      app-id: "${INSTAGRAM_APP_ID:}"
+      app-secret: "${INSTAGRAM_APP_SECRET:}"
       token-file-path: "credentials/instagram-token.json"
       max-carousel-items: 10
       publish-wait-ms: 3000
     email:
       spreadsheet-id: "1aVIPExd-26cILrlRW6lxemxWColFbBHgGkE6UeqbS4k"
-      sender: "no-reply@fatesinc.com"
+      account-email: "cloud@fatesinc.com"
+      sender: "NO-REPLY <no-reply@fatesinc.com>"
+      reply-to: "no_reply@fatesinc.com"
       draft-target: "no-reply@fatesinc.com"
       bcc-chunk-size: 50
-      auto-send: true
+      auto-send: false
       draft-send-delay-seconds: 5
     drive:
       folder-id: "1VLv23Hg5sl5Nd8kztGPnAfNj7a1J1C5R"
@@ -123,7 +127,6 @@ fates:
 
   profit-report:
     enabled: true
-    cron: "0 0 9 25 * *" # 매달 25일 오전 9시 자동 실행
     source-spreadsheet-id: "19VddLRj8KOczwN7tLPcKkJk1T0GVLNznwroaGj54BAU"
     target-spreadsheet-id: "1mcwgt1LzppZtdqGr94sjrL2Wa4ZdRPcqmIho1GHtAh0"
     target-folder-id: "1JvDIkArg_plVTAxZWq1AC7mHwKvV9yGh"

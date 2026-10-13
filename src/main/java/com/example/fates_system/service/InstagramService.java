@@ -28,6 +28,7 @@ import java.util.List;
 public class InstagramService {
 
     private final AppProperties appProperties;
+    private final GcpSecretService gcpSecretService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -210,6 +211,7 @@ public class InstagramService {
                 cachedInstagramToken = newToken;
                 log.info("[InstagramService] Instagram token auto-refreshed and saved locally");
                 saveAccessTokenLocally(newToken);
+                gcpSecretService.updateInstagramAccessToken(newToken);
                 return newToken;
             }
             log.warn("[InstagramService] Token refresh failed: {}", res.body());
@@ -251,11 +253,16 @@ public class InstagramService {
     }
 
     private String getAppId() {
-        return "";
+        // application.yml(env) → instagram-token.json 순으로 GcpSecretService에서 로드됨
+        GcpSecretService.InstagramCredentials creds = gcpSecretService.getInstagramCredentials();
+        if (creds != null && creds.appId() != null && !creds.appId().isBlank()) return creds.appId();
+        return appProperties.getNewsletter().getInstagram().getAppId();
     }
 
     private String getAppSecret() {
-        return "";
+        GcpSecretService.InstagramCredentials creds = gcpSecretService.getInstagramCredentials();
+        if (creds != null && creds.appSecret() != null && !creds.appSecret().isBlank()) return creds.appSecret();
+        return appProperties.getNewsletter().getInstagram().getAppSecret();
     }
 
     private String buildCaption() {
