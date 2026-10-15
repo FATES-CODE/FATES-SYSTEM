@@ -51,6 +51,9 @@ public class VssApiClient {
 
         try {
             for (int page = 1; page <= maxPages; page++) {
+                if (page > 1) {
+                    sleepSafe(100);
+                }
                 String apiUrl = vssApiBaseUrl + "/" + slug + "/voyages/tracking?per_page=100&page=" + page;
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(apiUrl))
@@ -186,5 +189,13 @@ public class VssApiClient {
             return date + " " + time;
         }
         return date;
+    }
+
+    private void sleepSafe(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

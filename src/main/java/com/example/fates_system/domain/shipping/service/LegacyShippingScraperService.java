@@ -18,8 +18,6 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 /**
  * 레거시 Toyoshingo HTML 크롤링 및 파싱 전담 서비스
@@ -37,8 +35,7 @@ public class LegacyShippingScraperService {
     /**
      * 레거시 Toyoshingo HTML 크롤링
      */
-    public List<VesselScheduleDto> fetchFromLegacyHtml(HttpClient httpClient, ExecutorService carrierExecutor,
-                                                       String carrierName, String slug, LocalDate today) {
+    public List<VesselScheduleDto> fetchFromLegacyHtml(HttpClient httpClient, String carrierName, String slug, LocalDate today) {
         String baseUrl = appProperties.getShipping().getBaseUrl();
         String carrierBaseUrl = baseUrl + "/" + slug + "/";
         try {
@@ -77,26 +74,20 @@ public class LegacyShippingScraperService {
                 portUrlMap.put(carrierBaseUrl, carrierName);
             }
 
-            List<CompletableFuture<List<VesselScheduleDto>>> portFutures = new ArrayList<>();
-            portUrlMap.forEach((portUrl, polName) -> {
-                portFutures.add(CompletableFuture.supplyAsync(
-                        () -> fetchSinglePortPage(httpClient, portUrl, carrierName, polName, today),
-                        carrierExecutor
-                ));
-            });
-
-            CompletableFuture.allOf(portFutures.toArray(new CompletableFuture[0])).join();
-
+            // IP 차단 방지 및 스레드 풀 고사(Deadlock) 방지: 포트별 순차 수집 + 200ms 지연
             List<VesselScheduleDto> carrierSchedules = new ArrayList<>();
-            for (CompletableFuture<List<VesselScheduleDto>> future : portFutures) {
+            for (Map.Entry<String, String> entry : portUrlMap.entrySet()) {
+                String portUrl = entry.getKey();
+                String polName = entry.getValue();
                 try {
-                    List<VesselScheduleDto> list = future.get();
-                    if (list != null) {
+                    List<VesselScheduleDto> list = fetchSinglePortPage(httpClient, portUrl, carrierName, polName, today);
+                    if (list != null && !list.isEmpty()) {
                         carrierSchedules.addAll(list);
                     }
                 } catch (Exception e) {
-                    log.warn("[LegacyShippingScraper] Port page fetch error: {}", e.getMessage());
+                    log.warn("[LegacyShippingScraper] Port page fetch error for '{}': {}", portUrl, e.getMessage());
                 }
+                sleepSafe(200);
             }
 
             Set<String> seenKeys = new HashSet<>();
@@ -141,7 +132,7 @@ public class LegacyShippingScraperService {
 
     private List<VesselScheduleDto> parseCarrierHtml(HttpClient httpClient, String html, String carrierName, String polName, LocalDate today, String portUrl) {
         Document doc = Jsoup.parse(html);
-        List<CompletableFuture<VesselScheduleDto>> futures = new ArrayList<>();
+        List<VesselScheduleDto> rawList = new ArrayList<>();
 
         for (Element a : doc.select("a[title]")) {
             String titleAttr = a.attr("title");
@@ -187,45 +178,24 @@ public class LegacyShippingScraperService {
             }
 
             String origFromMap = dataMap.getOrDefault("Original ETA", dataMap.getOrDefault("Original Arrival", ""));
-            final String finalPod = pod;
-            final String finalDetailUrl = detailUrl;
-
-            futures.add(CompletableFuture.supplyAsync(() -> {
-                String originalEta = null;
-                if (!origFromMap.isBlank()) {
-                    originalEta = extractOriginalEtaValue(origFromMap);
-                }
-                if (originalEta == null || originalEta.isBlank()) {
-                    originalEta = fetchOriginalEtaFromCertificate(httpClient, finalDetailUrl);
-                }
-
-                return VesselScheduleDto.builder()
-                        .carrier(carrierName)
-                        .vesselName(vessel)
-                        .voyage(voyage)
-                        .pol(PortNameUtils.cleanPortNameToEnglish(polName))
-                        .pod(finalPod)
-                        .originalEta(originalEta)
-                        .arrival(arrival)
-                        .berthing(berthing)
-                        .sailing(sailing)
-                        .terminal(terminal)
-                        .build();
-            }));
-        }
-
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        List<VesselScheduleDto> rawList = new ArrayList<>();
-        for (CompletableFuture<VesselScheduleDto> future : futures) {
-            try {
-                VesselScheduleDto dto = future.get();
-                if (dto != null) {
-                    rawList.add(dto);
-                }
-            } catch (Exception e) {
-                log.warn("[LegacyShippingScraper] Error resolving vessel detail future: {}", e.getMessage());
+            String originalEta = null;
+            if (!origFromMap.isBlank()) {
+                originalEta = extractOriginalEtaValue(origFromMap);
             }
+
+            rawList.add(VesselScheduleDto.builder()
+                    .carrier(carrierName)
+                    .vesselName(vessel)
+                    .voyage(voyage)
+                    .pol(PortNameUtils.cleanPortNameToEnglish(polName))
+                    .pod(pod)
+                    .originalEta(originalEta)
+                    .arrival(arrival)
+                    .berthing(berthing)
+                    .sailing(sailing)
+                    .terminal(terminal)
+                    .detailUrl(detailUrl)
+                    .build());
         }
 
         Set<String> seenKeys = new HashSet<>();
@@ -241,7 +211,7 @@ public class LegacyShippingScraperService {
         return uniqueList;
     }
 
-    private String fetchOriginalEtaFromCertificate(HttpClient httpClient, String detailUrl) {
+    public String fetchOriginalEtaFromCertificate(HttpClient httpClient, String detailUrl) {
         if (detailUrl == null || detailUrl.isBlank()) {
             return null;
         }
@@ -249,6 +219,7 @@ public class LegacyShippingScraperService {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(detailUrl))
                     .header("User-Agent", USER_AGENT)
+                    .timeout(Duration.ofSeconds(5))
                     .GET()
                     .build();
 
@@ -312,5 +283,13 @@ public class LegacyShippingScraperService {
         if (raw == null) return null;
         String trimmed = raw.trim();
         return (trimmed.isEmpty() || trimmed.startsWith("--")) ? null : trimmed;
+    }
+
+    public void sleepSafe(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

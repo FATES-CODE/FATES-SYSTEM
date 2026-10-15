@@ -1,0 +1,72 @@
+#!/bin/bash
+set -e
+
+echo "=========================================="
+echo "  FATES System GCP VM 자동 프로비저닝 시작"
+echo "=========================================="
+
+APP_USER="${app_user}"
+
+# 1. 대상 사용자 계정 확인 (없을 경우 생성)
+if ! id "$APP_USER" &>/dev/null; then
+    echo "사용자 계정($APP_USER) 생성 중..."
+    useradd -m -s /bin/bash "$APP_USER"
+    usermod -aG sudo "$APP_USER"
+fi
+
+# 2. Swap 2GB 생성 (메모리 부족 방지)
+if [ ! -f /swapfile ]; then
+    echo "[1/5] Swap 2GB 생성 중..."
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    echo "Swap 생성 완료!"
+else
+    echo "[1/5] Swap 이미 존재함. 건너뜁니다."
+fi
+
+# 3. 타임존을 한국 시간(Asia/Seoul)으로 설정
+echo "[2/5] 타임존을 Asia/Seoul 로 변경 중..."
+timedatectl set-timezone Asia/Seoul
+
+# 4. OpenJDK 17 설치
+echo "[3/5] OpenJDK 17 설치 중..."
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y openjdk-17-jre-headless
+
+# 5. 앱 디렉토리 생성 및 소유권 지정
+echo "[4/5] 앱 디렉토리 생성 (/home/$APP_USER/app)..."
+mkdir -p /home/$APP_USER/app/credentials
+mkdir -p /home/$APP_USER/app/logs
+chown -R $APP_USER:$APP_USER /home/$APP_USER/app
+
+# 6. Systemd 서비스 등록
+echo "[5/5] Systemd 서비스(fates.service) 등록 중..."
+SERVICE_FILE="/etc/systemd/system/fates.service"
+cat <<EOF > $SERVICE_FILE
+[Unit]
+Description=FATES System Application
+After=network.target
+
+[Service]
+User=$APP_USER
+WorkingDirectory=/home/$APP_USER/app
+ExecStart=/usr/bin/java -Xms128m -Xmx384m -Duser.timezone=Asia/Seoul -jar /home/$APP_USER/app/fates-system-0.0.1-SNAPSHOT.jar
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable fates.service
+
+echo "=========================================="
+echo "  VM 자동 프로비저닝 완료!"
+echo "=========================================="

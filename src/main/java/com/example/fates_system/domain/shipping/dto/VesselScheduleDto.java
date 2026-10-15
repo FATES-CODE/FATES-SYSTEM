@@ -20,4 +20,5 @@ public class VesselScheduleDto {
     private String berthing;
     private String sailing;
     private String terminal;
+    private String detailUrl;
 }

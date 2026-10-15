@@ -25,7 +25,6 @@ import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import com.example.fates_system.common.google.GcpSecretService;
 import com.example.fates_system.common.google.GoogleAuthService;
 
 /**
@@ -38,7 +37,6 @@ public class CanvaService {
 
     private final AppProperties appProperties;
     private final GoogleAuthService googleAuthService;
-    private final GcpSecretService gcpSecretService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -202,8 +200,15 @@ public class CanvaService {
                 objNode = objectMapper.createObjectNode();
             }
             objNode.put("refresh_token", newRefreshToken);
-            if (canvaCfg.getClientId() != null) objNode.put("client_id", canvaCfg.getClientId());
-            if (canvaCfg.getClientSecret() != null) objNode.put("client_secret", canvaCfg.getClientSecret());
+            if (canvaCfg.getClientId() != null && !canvaCfg.getClientId().isBlank()) {
+                objNode.put("client_id", canvaCfg.getClientId());
+            }
+            // client_secret이 설정에 있을 때만 덮어쓰고, 빈 값이면 파일에 있던 기존 값을 절대 덮어쓰지 않음
+            if (canvaCfg.getClientSecret() != null && !canvaCfg.getClientSecret().isBlank()) {
+                objNode.put("client_secret", canvaCfg.getClientSecret());
+            } else if (!objNode.has("client_secret")) {
+                objNode.put("client_secret", "");
+            }
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(tokenFile, objNode);
             log.info("[CanvaService] Updated Canva refresh token saved locally to {}", tokenPath);
         } catch (Exception e) {
@@ -256,7 +261,6 @@ public class CanvaService {
                     if (json.has("refresh_token")) {
                         String newRefreshToken = json.get("refresh_token").asText();
                         saveRefreshTokenLocally(newRefreshToken);
-                        gcpSecretService.updateCanvaRefreshToken(newRefreshToken);
                     }
                     return cachedAccessToken;
                 }

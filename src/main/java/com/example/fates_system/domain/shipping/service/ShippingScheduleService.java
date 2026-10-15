@@ -138,7 +138,7 @@ public class ShippingScheduleService {
         }
 
         LocalDate today = LocalDate.now(JST);
-        LocalDate startDate = today.minusDays(2);
+        LocalDate startDate = today;
         LocalDate endDate = today.plusMonths(fetchMonths);
 
         log.info("[ShippingScheduleService] Scraping {} carriers (Range: {} ~ {}, {}M, Max 3 concurrent workers)",
@@ -176,6 +176,23 @@ public class ShippingScheduleService {
                 ))
                 .toList();
 
+        // 스마트 조회: 한국행 + 오늘 이후 스케줄 중 Original ETA가 비어있는 극소수 선박만 증명서(certificate) 조회
+        int enrichedCount = 0;
+        for (VesselScheduleDto dto : koreaBoundSchedules) {
+            if ((dto.getOriginalEta() == null || dto.getOriginalEta().isBlank())
+                    && dto.getDetailUrl() != null && !dto.getDetailUrl().isBlank()) {
+                legacyScraperService.sleepSafe(200);
+                String origEta = legacyScraperService.fetchOriginalEtaFromCertificate(httpClient, dto.getDetailUrl());
+                if (origEta != null && !origEta.isBlank()) {
+                    dto.setOriginalEta(origEta);
+                    enrichedCount++;
+                }
+            }
+        }
+        if (enrichedCount > 0) {
+            log.info("[ShippingScheduleService] Enriched {} Korea-bound schedules with Original ETA from certificate", enrichedCount);
+        }
+
         String nowIso = ZonedDateTime.now(JST).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         String rangeDisplay = startDate + " ~ " + endDate + " (" + fetchMonths + "M)";
 
@@ -202,35 +219,45 @@ public class ShippingScheduleService {
         } catch (Exception e) {
             log.debug("[ShippingScheduleService] VSS API not available for '{}' ({}): {}", carrierName, slug, e.getMessage());
         }
-        return legacyScraperService.fetchFromLegacyHtml(httpClient, carrierExecutor, carrierName, slug, today);
+        return legacyScraperService.fetchFromLegacyHtml(httpClient, carrierName, slug, today);
     }
 
     private boolean isInDateRange(String arrival, String berthing, String sailing, LocalDate startDate, LocalDate endDate) {
-        return dateMatchesRange(arrival, startDate, endDate)
-                || dateMatchesRange(berthing, startDate, endDate)
-                || dateMatchesRange(sailing, startDate, endDate);
+        List<LocalDate> dates = new ArrayList<>();
+        addExtractedDates(dates, arrival, startDate.getYear());
+        addExtractedDates(dates, berthing, startDate.getYear());
+        addExtractedDates(dates, sailing, startDate.getYear());
+
+        if (dates.isEmpty()) {
+            return false;
+        }
+
+        // 스케줄 내의 모든 일정이 오늘(startDate) 이전인 과거 스케줄은 제외
+        LocalDate maxDate = Collections.max(dates);
+        if (maxDate.isBefore(startDate)) {
+            return false;
+        }
+
+        // 날짜 중 하나라도 startDate(오늘) ~ endDate 범위에 포함되어야 함
+        return dates.stream().anyMatch(d -> !d.isBefore(startDate) && !d.isAfter(endDate));
     }
 
-    private boolean dateMatchesRange(String dtStr, LocalDate startDate, LocalDate endDate) {
+    private void addExtractedDates(List<LocalDate> list, String dtStr, int defaultYear) {
         if (dtStr == null || dtStr.isBlank()) {
-            return false;
+            return;
         }
         Matcher m = DATE_EXTRACTION_PATTERN.matcher(dtStr);
         while (m.find()) {
             try {
                 String yStr = m.group(1);
-                int year = (yStr != null && !yStr.isBlank()) ? Integer.parseInt(yStr) : startDate.getYear();
+                int year = (yStr != null && !yStr.isBlank()) ? Integer.parseInt(yStr) : defaultYear;
                 int month = Integer.parseInt(m.group(2));
                 int day = Integer.parseInt(m.group(3));
 
-                LocalDate d = LocalDate.of(year, month, day);
-                if (!d.isBefore(startDate) && !d.isAfter(endDate)) {
-                    return true;
-                }
+                list.add(LocalDate.of(year, month, day));
             } catch (Exception ignored) {
             }
         }
-        return false;
     }
 
     private boolean isKoreaBound(VesselScheduleDto dto) {

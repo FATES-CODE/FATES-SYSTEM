@@ -1,7 +1,6 @@
 package com.example.fates_system.domain.newsletter.controller;
 
 import com.example.fates_system.domain.newsletter.service.CanvaService;
-import com.example.fates_system.common.google.GcpSecretService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

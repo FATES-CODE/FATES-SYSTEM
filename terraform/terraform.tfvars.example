@@ -1,0 +1,12 @@
+# 새 GCP 프로젝트 ID를 입력
+project_id = "your-gcp-project-id"
+
+region = "us-central1"
+zone   = "us-central1-a"
+
+machine_type = "e2-micro"
+
+ssh_user = "fates"
+
+# 로컬의 SSH 공개키 경로
+ssh_pub_key_path = "~/.ssh/id_rsa.pub"
