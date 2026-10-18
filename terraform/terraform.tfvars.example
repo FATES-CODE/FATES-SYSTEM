@@ -1,7 +1,7 @@
 # 새 GCP 프로젝트 ID를 입력
 project_id = "your-gcp-project-id"
 
-region = "us-central1"
+region = "us-central1" #이대로 유지
 zone   = "us-central1-a"
 
 machine_type = "e2-micro"
