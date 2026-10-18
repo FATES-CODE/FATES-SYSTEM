@@ -16,8 +16,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.fates_system.domain.dailylog.service.GoogleSheetLogService;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,7 +24,6 @@ public class SignatureSyncService {
     private final GoogleCalendarService googleCalendarService;
     private final HtmlSignatureBuilder signatureBuilder;
     private final GmailSettingService gmailSettingService;
-    private final GoogleSheetLogService sheetLogService;
     private final AppProperties appProperties;
 
     /**
@@ -146,9 +143,6 @@ public class SignatureSyncService {
             result.setError(e.getMessage());
             result.setSignatureStatus("fail");
         }
-
-        // 4. 로그 시트 업데이트
-        sheetLogService.updateLogSheet(email, result);
 
         return result;
     }
