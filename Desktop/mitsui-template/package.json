@@ -1,0 +1,13 @@
+{
+  "name": "mitsui-corporate-template",
+  "version": "1.0.0",
+  "description": "Vue.js + Node.js Corporate Website Template (Mitsui Style)",
+  "scripts": {
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "dev:server": "npm --prefix server start",
+    "dev:client": "npm --prefix client run dev",
+    "build:client": "npm --prefix client run build",
+    "start": "node server/server.js"
+  },
+  "keywords": ["vue", "nodejs", "corporate", "template", "mitsui"]
+}
