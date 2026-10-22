@@ -12,22 +12,23 @@
         class="video-slide-item"
         :class="{ 'is-active': currentVideoIndex === index }"
       >
-        <!-- 비디오 파일이 있고 정상 로드 시 비디오 재생 -->
         <video 
-          v-if="vid.isVideo && !vid.hasError"
+          v-if="vid.isVideo && !vid.hasError && (currentVideoIndex === index || index === 0)"
           :src="vid.src"
           autoplay 
           muted 
           loop 
           playsinline 
+          preload="auto"
           class="hero-video-element"
-          @error="onVideoError(index)"
+          @error="onVideoError(index)"s
         ></video>
         <img 
           v-else
           :src="vid.fallbackImage" 
           :alt="'AZAMINO Slide ' + (index + 1)" 
           class="hero-fallback-image"
+          loading="eager"
         />
       </div>
     </div>
@@ -35,23 +36,25 @@
     <div 
       class="caption-stage-center"
       :class="{ 'is-active': activeCaptionStep === 1, 'is-hidden': activeCaptionStep !== 1 }"
+      @click="toggleCaptionStep"
+      title="클릭하여 설명 보기"
     >
-
       <h1 class="center-innovation-title">Customer Innovation</h1>
 
       <button
         type="button"
         class="center-scroll-guide-btn"
-        @click="goToStep(2)"
+        @click.stop="toggleCaptionStep"
         title="다음 내용 보기"
       >
-
       </button>
     </div>
 
     <div 
       class="caption-stage-left-bottom"
       :class="{ 'is-active': activeCaptionStep === 2, 'is-hidden': activeCaptionStep !== 2 }"
+      @click="toggleCaptionStep"
+      title="클릭하여 타이틀 보기"
     >
       <div class="lb-inner-container">
         <p class="lb-description-text">
@@ -82,35 +85,30 @@ const heroVideos = ref([
     id: 1,
     isVideo: true,
     src: '/videos/video-1.mp4',
-    fallbackImage: '/images/main/slide-main-tokyo.jpg',
     hasError: false
   },
   {
     id: 2,
-    isVideo: false,
+    isVideo: true,
     src: '/videos/video-2.mp4',
-    fallbackImage: '/videos/video-2.jpg',
     hasError: false
   },
   {
     id: 3,
-    isVideo: false,
+    isVideo: true,
     src: '/videos/video-3.mp4',
-    fallbackImage: '/videos/video-3.jpg',
     hasError: false
   },
   {
     id: 4,
-    isVideo: false,
-    src: '/videos/video-4.mp4',
-    fallbackImage: '/videos/video-4.jpg',
+    isVideo: true,
+    src: '/videos/gaigosixyokuhin.mp4',
     hasError: false
   },
   {
     id: 5,
-    isVideo: false,
+    isVideo: true,
     src: '/videos/video-5.mp4',
-    fallbackImage: '/videos/video-5.jpg',
     hasError: false
   }
 ]);
@@ -161,6 +159,11 @@ const togglePlay = () => {
 
 const goToStep = (step) => {
   activeCaptionStep.value = step;
+  lastWheelTime = Date.now();
+};
+
+const toggleCaptionStep = () => {
+  activeCaptionStep.value = activeCaptionStep.value === 1 ? 2 : 1;
   lastWheelTime = Date.now();
 };
 
@@ -257,7 +260,7 @@ const textByLang = {
 };
 
 const currentText = computed(() => {
-  return textByLang[currentLang.value] || textByLang.ko;
+  return textByLang[currentLang.value] || textByLang.ja;
 });
 
 onMounted(() => {

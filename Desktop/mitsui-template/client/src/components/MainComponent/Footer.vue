@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <footer class="site-footer">
     <div class="container footer-container">
       <!-- 1. 상단 섹션: 좌측 대형 슬로건 + 우측 4열 사이트 내비게이션 -->
@@ -212,7 +212,7 @@ const footerData = {
 };
 
 const footerContent = computed(() => {
-  return footerData[currentLang.value] || footerData.ko;
+  return footerData[currentLang.value] || footerData.ja;
 });
 </script>
 

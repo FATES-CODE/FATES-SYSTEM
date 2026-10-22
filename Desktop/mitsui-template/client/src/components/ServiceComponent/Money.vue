@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="content.banner.categoryTitle"
     :category-en="content.banner.categoryEn"
@@ -277,6 +277,6 @@ const moneyData = {
 };
 
 const content = computed(() => {
-  return moneyData[currentLang.value] || moneyData.ko;
+  return moneyData[currentLang.value] || moneyData.ja;
 });
 </script>

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="content.banner.categoryTitle"
     :category-en="content.banner.categoryEn"
@@ -279,7 +279,7 @@ const inquiryData = {
 };
 
 const content = computed(() => {
-  return inquiryData[currentLang.value] || inquiryData.ko;
+  return inquiryData[currentLang.value] || inquiryData.ja;
 });
 
 const formData = reactive({

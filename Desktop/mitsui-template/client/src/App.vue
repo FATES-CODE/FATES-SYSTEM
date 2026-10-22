@@ -141,7 +141,7 @@ const menusByLang = {
 };
 
 const currentMainMenu = computed(() => {
-  return menusByLang[currentLang.value] || menusByLang.ko;
+  return menusByLang[currentLang.value] || menusByLang.ja;
 });
 </script>
 

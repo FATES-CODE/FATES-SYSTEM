@@ -9,20 +9,23 @@
     }"
   >
     <div class="header-inner-container">
-      <!-- 1. 로고 영역: 스크롤 전에는 화이트 로고, 스크롤/메뉴열림 시 컬러 로고. 마우스 호버로 바뀌지 않음 -->
       <div class="header-logo-area">
         <router-link to="/" class="logo-link" title="AZAMINO" @click="handleLogoClick">
           <img 
             v-if="!isHeaderWhite"
-            src="/images/logo-footer.png" 
+            src="/images/Azamino-PNG-25.png"
             alt="AZAMINO Inc" 
             class="header-brand-logo"
+            loading="eager"
+            decoding="sync"
           />
           <img 
             v-else
             src="/images/logo.jpg" 
             alt="AZAMINO Inc" 
-            class="header-brand-logo"
+            class="header-brand-logo1"
+            loading="eager"
+            decoding="sync"
           />
         </router-link>
       </div>
@@ -93,10 +96,10 @@
           <button 
             type="button" 
             class="lang-box-btn" 
-            :class="{ 'is-active': currentLang === 'ko' }"
-            @click="setLanguage('ko')"
+            :class="{ 'is-active': currentLang === 'ja' }"
+            @click="setLanguage('ja')"
           >
-            KR
+            JP
           </button>
           <button 
             type="button" 
@@ -109,22 +112,20 @@
           <button 
             type="button" 
             class="lang-box-btn" 
-            :class="{ 'is-active': currentLang === 'ja' }"
-            @click="setLanguage('ja')"
+            :class="{ 'is-active': currentLang === 'ko' }"
+            @click="setLanguage('ko')"
           >
-            JP
+            KR
           </button>
         </div>
       </div>
 
-      <!-- 4. 데스크톱 와이드 메가 메뉴 패널 (클릭 시 열림, 애니메이션 효과 없음) -->
       <div 
         v-if="activeMenuItem && activeMenuItem.subItems && activeMenuItem.subItems.length > 0"
         class="subpage-mega-menu-panel"
         @click.stop
       >
         <div class="mega-menu-content-wrap">
-          <!-- 좌측: 대카테고리 제목 (상표 바로 아래 정렬) -->
           <div class="mega-menu-left-title-box">
             <router-link :to="activeMenuItem.url" class="mega-category-title-link" @click="handleLinkClick">
               <h3 class="mega-category-title">{{ activeMenuItem.title }}</h3>
@@ -132,7 +133,6 @@
             <span class="mega-category-sub">{{ getCategoryEn(activeMenuItem.id) }}</span>
           </div>
 
-          <!-- A. 회사정보 카테고리 -->
           <div v-if="activeMenuItem.id === 'company'" class="mega-menu-layout-company">
             <div class="mega-company-links">
               <!-- 1. 인사말 -->
@@ -141,7 +141,6 @@
                   <span class="mega-item-name">{{ getSubItemName('company', '/greeting') }}</span>
                   <span class="mega-item-red-arrow">&gt;</span>
                 </router-link>
-                <!-- 인사 아래에 회사소개서 다운로드 -->
                 <a 
                   href="/downloads/company-brochure.pdf" 
                   download="AZAMINO_회사소개서.pdf" 
@@ -156,7 +155,6 @@
                 </a>
               </div>
 
-              <!-- 2. 경영이념 -->
               <div class="mega-company-item">
                 <router-link to="/overview" class="mega-menu-item-link" @click="handleLinkClick">
                   <span class="mega-item-name">{{ getSubItemName('company', '/overview') }}</span>
@@ -165,7 +163,6 @@
               </div>
             </div>
 
-            <!-- 우측: informationheaderimage2 배너 이미지 -->
             <div class="mega-header-image-box">
               <router-link to="/information" @click="handleLinkClick" class="mega-img-link">
                 <img 
@@ -177,7 +174,6 @@
             </div>
           </div>
 
-          <!-- B. 사업소개 카테고리 (serviceheader 1,2,3,4) -->
           <div v-else-if="activeMenuItem.id === 'service'" class="mega-menu-layout-service">
             <div class="mega-service-cards-grid">
               <!-- 1. 개호식품 -->
@@ -205,7 +201,7 @@
               <!-- 3. 생활용품 -->
               <router-link to="/product" class="mega-service-card" @click="handleLinkClick">
                 <div class="mega-service-thumb">
-                  <img src="/images/header/serviceheader3.png" alt="생활용품" />
+                  <img src="/images/header/serviceheader4.jpg" alt="생활용품" />
                 </div>
                 <div class="mega-service-info">
                   <span class="mega-service-name">{{ getSubItemName('service', '/product') }}</span>
@@ -216,7 +212,7 @@
               <!-- 4. 화학제품 -->
               <router-link to="/chemical" class="mega-service-card" @click="handleLinkClick">
                 <div class="mega-service-thumb">
-                  <img src="/images/header/serviceheader4.jpg" alt="화학제품" />
+                  <img src="/images/header/serviceheader3.png" alt="화학제품" />
                 </div>
                 <div class="mega-service-info">
                   <span class="mega-service-name">{{ getSubItemName('service', '/chemical') }}</span>
@@ -239,7 +235,6 @@
               </router-link>
             </div>
 
-            <!-- 우측: contactheaderimage 배너 이미지 -->
             <div class="mega-header-image-box">
               <router-link to="/contact" @click="handleLinkClick" class="mega-img-link">
                 <img 
@@ -297,7 +292,6 @@ const isScrolled = ref(false);
 const isMobileMenuOpen = ref(false);
 const activeDropdown = ref(null);
 
-// 스크롤을 내렸거나 메뉴가 클릭되어 열렸을 때 화이트 사각 박스 헤더 활성화
 const isHeaderWhite = computed(() => {
   return isScrolled.value || activeDropdown.value !== null;
 });
@@ -328,9 +322,8 @@ const getSubItemName = (catId, url) => {
     const sub = item.subItems.find(s => s.url === url);
     if (sub) return sub.name;
   }
-  // 기본 폴백 이름
   const fallback = {
-    '/greeting': currentLang.value === 'ja' ? 'ご挨拶' : (currentLang.value === 'en' ? 'CEO Message' : '인사말'),
+    '/greeting': currentLang.value === 'ja' ? 'ご挨拶' : (currentLang.value === 'en' ? 'Greeting' : '인사말'),
     '/overview': currentLang.value === 'ja' ? '企業理念' : (currentLang.value === 'en' ? 'Corporate Philosophy' : '경영이념'),
     '/food': currentLang.value === 'ja' ? '介護食品' : (currentLang.value === 'en' ? 'Care Food' : '개호식품'),
     '/money': currentLang.value === 'ja' ? '金庫' : (currentLang.value === 'en' ? 'Safes' : '금고'),
@@ -351,7 +344,6 @@ const isMenuActive = (item) => {
   return false;
 };
 
-// 메뉴바 클릭 시 토글 (하위 메뉴가 있으면 메뉴를 열고, 없으면 이동)
 const toggleMenu = (item) => {
   if (item.subItems && item.subItems.length > 0) {
     activeDropdown.value = (activeDropdown.value === item.id) ? null : item.id;
@@ -472,17 +464,23 @@ onUnmounted(() => {
   text-decoration: none;
 }
 
-.header-brand-logo {
-  height: 46px;
-  max-height: 50px;
+.header-brand-logo1 {
+  height: 50px;
+  max-height: 100px;
   width: auto;
   object-fit: contain;
   display: block;
 }
 
-/* ==========================================================================
-   메인 내비게이션 (GNB)
-   ========================================================================== */
+
+.header-brand-logo {
+  height: 148px;
+  max-height: 100px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 .header-main-nav {
   display: flex;
   align-items: center;
@@ -548,7 +546,8 @@ onUnmounted(() => {
 }
 
 .mitsui-style-header.is-white-theme .nav-item-link:hover {
-  color: #004098;
+  color: #000000;
+  opacity: 0.75;
 }
 
 /* 플러스 기호 (+) */
@@ -568,7 +567,7 @@ onUnmounted(() => {
 
 .nav-plus-icon.rotate {
   transform: rotate(45deg);
-  color: #004098;
+  color: #111827;
 }
 
 
@@ -672,7 +671,8 @@ onUnmounted(() => {
 }
 
 .mega-category-title-link:hover .mega-category-title {
-  color: #004098;
+  color: #111827;
+  opacity: 0.8;
 }
 
 .mega-category-title {
@@ -737,7 +737,7 @@ onUnmounted(() => {
 .mega-brochure-download-link:hover {
   background-color: #f1f5f9;
   border-color: #cbd5e1;
-  color: #004098;
+  color: #111827;
   transform: translateY(-1px);
 }
 
@@ -748,7 +748,7 @@ onUnmounted(() => {
 }
 
 .brochure-download-arrow {
-  color: #004098;
+  color: #64748b;
   font-weight: 800;
 }
 
@@ -804,8 +804,8 @@ onUnmounted(() => {
 }
 
 .mega-service-card:hover {
-  border-color: #004098;
-  box-shadow: 0 8px 24px rgba(0, 64, 152, 0.1);
+  border-color: #94a3b8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   transform: translateY(-3px);
 }
 
@@ -843,7 +843,7 @@ onUnmounted(() => {
 }
 
 .mega-service-card:hover .mega-service-name {
-  color: #004098;
+  color: #000000;
 }
 
 /* ==========================================================================
@@ -901,7 +901,8 @@ onUnmounted(() => {
 }
 
 .mega-menu-item-link:hover .mega-item-name {
-  color: #004098;
+  color: #000000;
+  text-decoration: underline;
 }
 
 /* ==========================================================================

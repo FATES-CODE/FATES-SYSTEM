@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="content.banner.categoryTitle"
     :category-en="content.banner.categoryEn"
@@ -278,6 +278,6 @@ const chemicalData = {
 };
 
 const content = computed(() => {
-  return chemicalData[currentLang.value] || chemicalData.ko;
+  return chemicalData[currentLang.value] || chemicalData.ja;
 });
 </script>

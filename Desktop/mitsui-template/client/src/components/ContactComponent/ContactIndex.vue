@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="currentContent.categoryTitle"
     :category-en="currentContent.categoryEn"
@@ -124,7 +124,7 @@ const langData = {
 };
 
 const currentContent = computed(() => {
-  return langData[currentLang.value] || langData.ko;
+  return langData[currentLang.value] || langData.ja;
 });
 
 const switchLang = (code) => {

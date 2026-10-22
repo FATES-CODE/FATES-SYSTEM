@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="mitsui-style-main-view">
     <MAINSlider :slides="currentContent.slides" />
     <GlobeInnovation />
@@ -9,12 +9,6 @@
           <div class="header-text-group">
             <h2 class="sec-headline">{{ currentContent.business.headline }}</h2>
           </div>
-          <router-link to="/service" class="sec-view-all-link">
-            <span>{{ currentContent.business.viewAllText }}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </router-link>
         </div>
 
         <div class="business-rows-list">
@@ -23,11 +17,11 @@
             :key="biz.id" 
             class="biz-row-item"
           >
-            <router-link :to="biz.link" class="biz-row-link">
+            <router-link :to="biz.link || '/service'" class="biz-row-link">
               <div class="biz-row-left">
                 <div class="biz-row-title-wrap">
                   <h3 class="biz-row-title">{{ biz.title }}</h3>
-                  <span v-if="biz.enTitle" class="biz-row-subtitle">{{ biz.enTitle }}</span>
+                  <span v-if="biz.badge || biz.enTitle" class="biz-row-subtitle">{{ biz.badge || biz.enTitle }}</span>
                 </div>
                 <p class="biz-row-desc">{{ biz.desc }}</p>
               </div>
@@ -78,7 +72,6 @@
                 </div>
               </div>
             </a>
-            <!-- 일반 페이지 이동 링크 -->
             <router-link v-else :to="item.link" class="pickup-card-link">
               <div class="pickup-img-box">
                 <img :src="item.image" :alt="item.title" class="pickup-img" loading="lazy" />
@@ -190,31 +183,33 @@ const mainPageData = {
       ]
     },
     business: {
-              headline: 'Discover Our Global Operations',
-              items: [
-                {
-                  id: 'food',
-                  badge: 'CARE FOOD',
-                  title: 'Innovation',
-                  desc: 'Creating new value beyond simple connectivity.',
-                  image: '/images/main/slide-main-healthyfood.jpeg',
-                },
-                {
-                  id: 'money',
-                  badge: 'SECURITY',
-                  title: 'Sustainability',
-                  desc: 'Our innovation is the foundation of steady growth.',
-                  image: '/images/main/slide-main-money.png',
-                },
-                {
-                  id: 'product',
-                  badge: 'LIFESTYLE',
-                  title: 'Trust',
-                  desc: 'A network built on trust, proven by flawless execution.',
-                  image: '/images/main/slide-main-tokyo.jpg',
-                },
-              ]
-            },
+      headline: 'Discover Our Global Operations',
+      viewAllText: '사업소개 전체보기',
+      items: [
+        {
+          id: 'food',
+          title: 'Innovation',
+          desc: '단순한 연결을 넘어 새로운 가치를 창출합니다.',
+          image: '/images/main/slide-main-healthyfood.jpeg',
+          link: '/food'
+        },
+        {
+          id: 'money',
+          title: 'Sustainability',
+          desc: '우리의 혁신은 흔들림 없는 성장의 굳건한 토대입니다.',
+          image: '/images/main/slide-main-money.png',
+          link: '/money'
+        },
+        {
+          id: 'product',
+          title: 'Trust',
+          desc: '신뢰로 구축하고 완벽한 실행력으로 증명하는 네트워크.',
+          image: '/images/main/slide-main-tokyo.jpg',
+          link: '/product'
+        }
+      ]
+    },
+
 
     pickup: {
       headline: 'Contents',
@@ -314,7 +309,7 @@ const mainPageData = {
     },
     about: {
       headline: '信頼と洞察で、日韓貿易の未来を切り拓く。',
-      desc1: '株式会社アザミノ（AZAMINO）は、日韓をつなぐ確かなネットワークと市場知見を強みとする総合ビジネスパートナーです。',
+      desc1: '株式会社AZAMINOは、日韓をつなぐ確かなネットワークと市場知見を強みとする総合ビジネスパートナーです。',
       desc2: '介護食品、セキュリティ金庫、生活用品、高機能化学品に至るまで、多角的な事業を展開し、単なる流通を超えた持続可能な価値を社会に提供します。',
       ctaText: '企業情報を見る',
       pillars: [
@@ -335,32 +330,34 @@ const mainPageData = {
         }
       ]
     },
-   business: {
-             headline: 'Discover Our Global Operations',
-             items: [
-               {
-                 id: 'food',
-                 badge: 'CARE FOOD',
-                 title: 'Innovation',
-                 desc: 'Creating new value beyond simple connectivity.',
-                 image: '/images/main/slide-main-healthyfood.jpeg',
-               },
-               {
-                 id: 'money',
-                 badge: 'SECURITY',
-                 title: 'Sustainability',
-                 desc: 'Our innovation is the foundation of steady growth.',
-                 image: '/images/main/slide-main-money.png',
-               },
-               {
-                 id: 'product',
-                 badge: 'LIFESTYLE',
-                 title: 'Trust',
-                 desc: 'A network built on trust, proven by flawless execution.',
-                 image: '/images/card/main-card-2.jpeg',
-               },
-             ]
-           },
+    business: {
+      headline: 'Discover Our Global Operations',
+      viewAllText: '事業紹介 全体を見る',
+      items: [
+        {
+          id: 'food',
+          title: 'Innovation',
+          desc: '単なるつながりを超え、新たな価値を創造する。',
+          image: '/images/main/slide-main-healthyfood.jpeg',
+          link: '/food'
+        },
+        {
+          id: 'money',
+          title: 'Sustainability',
+          desc: '私たちの革新は、着実な成長の礎です。',
+          image: '/images/main/slide-main-money.png',
+          link: '/money'
+        },
+        {
+          id: 'product',
+          title: 'Trust',
+          desc: '信頼で築き、確かな実行力で証明するネットワーク。',
+          image: '/images/main/slide-main-tokyo.jpg',
+          link: '/product'
+        }
+      ]
+
+    },
     feature: {
       headline: 'データ主導の貿易ソリューションとアザミノの未来構想',
       desc: '迅速な通関業務、厳密な品質検証、安全な物流ネットワークまで、日韓貿易の全過程をワンストップで最適化します。',
@@ -412,6 +409,7 @@ const mainPageData = {
       btnInquiry: 'お問い合わせ',
       btnLocation: 'アクセス'
     }
+
   },
   en: {
     slides: [
@@ -491,31 +489,32 @@ const mainPageData = {
       ]
     },
     business: {
-              headline: 'Discover Our Global Operations',
-              items: [
-                {
-                  id: 'food',
-                  badge: 'CARE FOOD',
-                  title: 'Innovation',
-                  desc: 'Creating new value beyond simple connectivity.',
-                  image: '/images/main/slide-main-healthyfood.jpeg',
-                },
-                {
-                  id: 'money',
-                  badge: 'SECURITY',
-                  title: 'Sustainability',
-                  desc: 'Our innovation is the foundation of steady growth.',
-                  image: '/images/main/slide-main-money.png',
-                },
-                {
-                  id: 'product',
-                  badge: 'LIFESTYLE',
-                  title: 'Trust',
-                  desc: 'A network built on trust, proven by flawless execution.',
-                  image: '/images/main/slide-main-tokyo.jpg',
-                },
-              ]
-            },
+      headline: 'Discover Our Global Operations',
+      viewAllText: 'View All Operations',
+      items: [
+        {
+          id: 'food',
+          title: 'Innovation',
+          desc: 'Creating new value beyond simple connectivity.',
+          image: '/images/main/slide-main-healthyfood.jpeg',
+          link: '/food'
+        },
+        {
+          id: 'money',
+          title: 'Sustainability',
+          desc: 'Our innovation is the foundation of steady growth.',
+          image: '/images/main/slide-main-money.png',
+          link: '/money'
+        },
+        {
+          id: 'product',
+          title: 'Trust',
+          desc: 'A network built on trust, proven by flawless execution.',
+          image: '/images/main/slide-main-tokyo.jpg',
+          link: '/product'
+        }
+      ]
+    },
     feature: {
       headline: 'Data-Driven Trade Solutions and AZAMINO’s Global Vision',
       desc: 'From rapid customs clearance to strict quality audits and safe warehousing, we unify cross-border trade seamlessly.',
@@ -571,7 +570,7 @@ const mainPageData = {
 };
 
 const currentContent = computed(() => {
-  return mainPageData[currentLang.value] || mainPageData.ko;
+  return mainPageData[currentLang.value] || mainPageData.ja;
 });
 </script>
 
@@ -583,10 +582,6 @@ const currentContent = computed(() => {
   font-family: 'Plus Jakarta Sans', 'Noto Sans KR', -apple-system, sans-serif;
   overflow-x: clip;
 }
-
-/* ==========================================================================
-   2. 신착 정보 / 퀵 토픽 바
-   ========================================================================== */
 .quick-topics-section {
   background-color: #f8fafc;
   border-bottom: 1px solid #e2e8f0;

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="content.banner.categoryTitle"
     :category-en="content.banner.categoryEn"
@@ -94,42 +94,17 @@ const locationData = {
     tableSectionTitle: '소재지 및 연락처 상세',
     tableRows: [
       { th: '소재지', td: '〒153-0065 일본 도쿄도 메구로구 나카초 2-47-5 메구로 센트럴 맨션 (〒153-0065 東京都目黒区中町２丁目４７−５ 目黒セントラルマンション)' },
-      { th: '대표 전화', td: '02-1234-5678' },
-      { th: '팩스 (FAX)', td: '02-1234-5679' },
+      { th: '대표 전화', td: '03-5543-0382' },
+      { th: '팩스 (FAX)', td: '03-5542-0387' },
       { th: '이메일', td: 'azamino.ltd@gmail.com' }
     ],
-    transportSectionTitle: '대중교통 안내',
-    transports: [
-      {
-        icon: '전철',
-        title: '전철 이용 시',
-        items: [
-          '도큐 도요코선(東急東横線) 유텐지역(祐天寺駅) 동쪽 출구에서 도보 약 12분',
-          '도큐 도요코선·도쿄메트로 히비야선 나카메구로역(中目黒駅)에서 도보 약 15분'
-        ]
-      },
-      {
-        icon: '버스',
-        title: '버스 이용 시',
-        items: [
-          '도큐 버스 [메구로 중앙체육관(目黒中央体育館)] 또는 [스미요시교사(住吉校舎)] 정류장 하차 도보 3분'
-        ]
-      },
-      {
-        icon: '주차',
-        title: '자가용 및 주차',
-        items: [
-          '건물 내 방문객 주차 공간이 협소하므로 인근 코인 유료주차장을 이용해 주시기 바랍니다.'
-        ]
-      }
-    ]
   },
   ja: {
     banner: {
       categoryTitle: 'お問い合わせ',
       categoryEn: 'CONTACT US',
       pageTitle: 'アクセス',
-      pageDescription: 'アザミノ株式会社（AZAMINO Inc.）本社へのアクセスをご案内いたします。'
+      pageDescription: 'AZAMINO株式会社本社へのアクセスをご案内いたします。'
     },
     office: {
       badge: 'HEAD OFFICE',
@@ -144,35 +119,11 @@ const locationData = {
     tableSectionTitle: '所在地および連絡先詳細',
     tableRows: [
       { th: '所在地', td: '〒153-0065 東京都目黒区中町２丁目４７−５ 目黒セントラルマンション' },
-      { th: '代表電話', td: '+82-2-1234-5678' },
-      { th: 'FAX', td: '+82-2-1234-5679' },
+      { th: '代表電話', td: '03-5543-0382' },
+      { th: 'FAX', td: '03-5542-0387' },
       { th: 'Eメール', td: 'azamino.ltd@gmail.com' }
     ],
     transportSectionTitle: '公共交通機関のご案内',
-    transports: [
-      {
-        icon: '電車',
-        title: '電車をご利用の場合',
-        items: [
-          '東急東横線「祐天寺駅」東口より徒歩約12分',
-          '東急東横線・東京メトロ日比谷線「中目黒駅」正面口より徒歩約15分'
-        ]
-      },
-      {
-        icon: 'バス',
-        title: 'バスをご利用の場合',
-        items: [
-          '東急バス「目黒中央体育館」または「住吉校舎」停留所下車 徒歩3分'
-        ]
-      },
-      {
-        icon: '駐車場',
-        title: 'お車・駐車場のご案内',
-        items: [
-          '建物内の来客用駐車スペースに限りがあるため、近隣のコインパーキングをご利用ください。'
-        ]
-      }
-    ]
   },
   en: {
     banner: {
@@ -194,40 +145,15 @@ const locationData = {
     tableSectionTitle: 'Address & Contact Details',
     tableRows: [
       { th: 'Address', td: 'Meguro Central Mansion, 2-47-5 Nakamachi, Meguro-ku, Tokyo 153-0065, Japan' },
-      { th: 'Telephone', td: '+82-2-1234-5678' },
-      { th: 'Fax', td: '+82-2-1234-5679' },
+      { th: 'Telephone', td: '03-5543-0382' },
+      { th: 'Fax', td: '03-5542-0387' },
       { th: 'Email', td: 'azamino.ltd@gmail.com' }
     ],
-    transportSectionTitle: 'Transportation & Parking',
-    transports: [
-      {
-        icon: 'Train',
-        title: 'By Train',
-        items: [
-          'Approx. 12 min walk from East Exit of Yutenji Station (Tokyu Toyoko Line)',
-          'Approx. 15 min walk from Front Exit of Naka-Meguro Station (Tokyu Toyoko Line / Tokyo Metro Hibiya Line)'
-        ]
-      },
-      {
-        icon: 'Bus',
-        title: 'By Bus',
-        items: [
-          '3 min walk from Tokyu Bus "Meguro Chuo Taiikukan" or "Sumiyoshi Kosha" stop'
-        ]
-      },
-      {
-        icon: 'Parking',
-        title: 'Parking Information',
-        items: [
-          'Visitor parking within the building is limited; please utilize nearby public coin-operated parking.'
-        ]
-      }
-    ]
   }
 };
 
 const content = computed(() => {
-  return locationData[currentLang.value] || locationData.ko;
+  return locationData[currentLang.value] || locationData.ja;
 });
 </script>
 

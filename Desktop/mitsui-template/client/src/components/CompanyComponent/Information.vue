@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="currentContent.categoryTitle"
     :category-en="currentContent.categoryEn"
@@ -63,7 +63,6 @@
                     </div>
                   </div>
 
-                  <!-- 글로벌 네트워크 & 세부 지표 -->
                   <div class="glance-stat-col stat-network-col">
                     <div class="network-header-wrap">
                       <span class="stat-col-label">{{ glanceData.bottomStats.globalNetwork.label }}</span>
@@ -73,7 +72,6 @@
                       </div>
                     </div>
 
-                    <!-- 글로벌 세부 3개 항목 -->
                     <div class="network-sub-metrics-grid">
                       <div 
                         v-for="(sub, sIdx) in glanceData.bottomStats.globalNetwork.subMetrics" 
@@ -116,7 +114,6 @@
 
             </div>
 
-            <!-- 하단 주석 설명문 -->
             <div class="glance-footnote-bar">
               <p class="footnote-text">{{ glanceData.footnote }}</p>
             </div>
@@ -126,10 +123,8 @@
       </section>
     </template>
 
-    <!-- 메인 본문 영역 -->
     <div id="company-main-content" class="company-mitsui-template-wrap">
-      
-      <!-- 1. 핵심 회사 소개 3대 섹션: 인사말 / 회사이념 / CI -->
+
       <div class="company-features-list">
         <section 
           v-for="(feature, fIdx) in companyFeatures" 
@@ -153,17 +148,6 @@
 
             <p class="biz-feature-lead-text">{{ feature.leadText }}</p>
             <p class="biz-feature-sub-text">{{ feature.subText }}</p>
-
-            <!-- 하단 세부 바로가기 링크 리스트 (| 구분선) -->
-            <ul class="biz-sub-links-list">
-              <li
-                v-for="(subLink, sIdx) in feature.subLinks"
-                :key="sIdx"
-                class="biz-sub-link-item"
-              >
-                <router-link :to="subLink.url">{{ subLink.name }}</router-link>
-              </li>
-            </ul>
           </div>
         </section>
       </div>
@@ -259,7 +243,7 @@ const glanceDataByLang = {
 };
 
 const glanceData = computed(() => {
-  return glanceDataByLang[currentLang.value] || glanceDataByLang.ko;
+  return glanceDataByLang[currentLang.value] || glanceDataByLang.ja;
 });
 
 const featuresDataByLang = {
@@ -341,7 +325,7 @@ const featuresDataByLang = {
 };
 
 const companyFeatures = computed(() => {
-  return featuresDataByLang[currentLang.value] || featuresDataByLang.ko;
+  return featuresDataByLang[currentLang.value] || featuresDataByLang.ja;
 });
 
 const isRevealed = ref(false);
@@ -404,7 +388,7 @@ const langData = {
 };
 
 const currentContent = computed(() => {
-  return langData[currentLang.value] || langData.ko;
+  return langData[currentLang.value] || langData.ja;
 });
 </script>
 

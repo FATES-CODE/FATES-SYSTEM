@@ -39,6 +39,7 @@
                   muted
                   loop
                   playsinline
+                  preload="auto"
                   class="showcase-video"
                   @timeupdate="e => onTimeUpdate(e, idx)"
                 ></video>
@@ -99,7 +100,7 @@ const textsByLang = {
 };
 
 const currentContent = computed(() => {
-  return textsByLang[currentLang.value] || textsByLang.ko;
+  return textsByLang[currentLang.value] || textsByLang.ja;
 });
 
 const videoList = [
@@ -311,6 +312,23 @@ onMounted(() => {
   nextTick(() => {
     initEarth();
     window.addEventListener('resize', handleResize);
+
+    // 페이지 진입 시 비디오 즉시 재생 보장
+    videoRefs.value.forEach((v, i) => {
+      if (v) {
+        v.muted = true;
+        const playPromise = v.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              playingStates.value[i] = true;
+            })
+            .catch(() => {
+              playingStates.value[i] = false;
+            });
+        }
+      }
+    });
   });
 });
 

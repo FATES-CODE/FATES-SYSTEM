@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="pageMeta.categoryTitle"
     :category-en="pageMeta.categoryEn"
@@ -141,7 +141,7 @@ const pageDataByLang = {
 };
 
 const pageMeta = computed(() => {
-  return pageDataByLang[currentLang.value] || pageDataByLang.ko;
+  return pageDataByLang[currentLang.value] || pageDataByLang.ja;
 });
 </script>
 

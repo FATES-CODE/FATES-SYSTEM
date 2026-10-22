@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="content.banner.categoryTitle"
     :category-en="content.banner.categoryEn"
@@ -280,6 +280,6 @@ const productData = {
 };
 
 const content = computed(() => {
-  return productData[currentLang.value] || productData.ko;
+  return productData[currentLang.value] || productData.ja;
 });
 </script>

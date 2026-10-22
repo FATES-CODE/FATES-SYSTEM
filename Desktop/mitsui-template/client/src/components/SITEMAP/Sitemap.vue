@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <SubPageLayout
     :category-title="sitemapContent.categoryTitle"
     :category-en="sitemapContent.categoryEn"
@@ -210,7 +210,7 @@ const sitemapData = {
 };
 
 const sitemapContent = computed(() => {
-  return sitemapData[currentLang.value] || sitemapData.ko;
+  return sitemapData[currentLang.value] || sitemapData.ja;
 });
 </script>
 
